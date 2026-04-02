@@ -104,17 +104,6 @@ bl workspaces  # List and manage Blaxel workspaces.
 - [version](references/version.md) - Print the version number
 - [workspaces](references/workspaces.md) - List and manage Blaxel workspaces.
 
-## Discovering Options
-
-To see available subcommands and flags, run `--help` on any command:
-
-```bash
-bl --help
-bl deploy --help
-bl get --help
-bl get agents --help
-```
-
 ## Common Workflows
 
 ### Create a sandbox, run a command, and get its logs
@@ -137,13 +126,10 @@ spec:
         action: delete
 EOF
 
-# 2. Retrieve sandbox configuration
-bl get sandbox my-sandbox
-
-# 3. Execute a command in the sandbox and get stdout of the command
+# 2. Execute a command in the sandbox and get stdout of the command
 bl run sandbox my-sandbox --path /process --data '{"command": "echo hello world", "name": "my-cmd", "waitForCompletion": true}'
 
-# 4. Retrieve the logs for that command in case stdout was not sufficient
+# 3. Retrieve the logs for that command in case stdout was not sufficient
 bl logs sandbox my-sandbox my-cmd
 ```
 
