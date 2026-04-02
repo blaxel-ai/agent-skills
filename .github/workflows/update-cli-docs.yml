@@ -8,12 +8,13 @@ on:
 jobs:
   update-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_PAT }}
 
       - name: Install Blaxel CLI
         run: curl -fsSL https://raw.githubusercontent.com/blaxel-ai/toolkit/main/install.sh | sh
@@ -56,4 +57,4 @@ jobs:
             --body "Auto-generated from CLI release ${CLI_VERSION}. Review the updated command references and merge when ready." \
             --assignee cploujoux
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ github.token }}
