@@ -130,36 +130,21 @@ spec:
   runtime:
     image: blaxel/base-image:latest
     memory: 2048
+  lifecycle:
+    expirationPolicies:
+      - type: ttl-idle
+        value: 1h       # Delete after 1 hour of inactivity. Units: h, d, w
+        action: delete
 EOF
 
-# 2. Wait for the sandbox to be ready
-bl get sandbox my-sandbox --watch
+# 2. Retrieve sandbox configuration
+bl get sandbox my-sandbox
 
-# 3. Execute a command in the sandbox
+# 3. Execute a command in the sandbox and get stdout of the command
 bl run sandbox my-sandbox --path /process --data '{"command": "echo hello world", "name": "my-cmd", "waitForCompletion": true}'
 
-# 4. Retrieve the logs for that command
+# 4. Retrieve the logs for that command in case stdout was not sufficient
 bl logs sandbox my-sandbox my-cmd
-```
-
-### Deploy an agent
-
-```bash
-bl new agent my-agent
-cd my-agent
-bl serve --hotreload    # Test locally
-bl deploy               # Deploy to cloud
-bl chat my-agent        # Chat with it
-```
-
-### Manage sandboxes
-
-```bash
-bl get sandboxes                    # List all
-bl get sandbox my-sandbox --watch   # Watch status
-bl connect sandbox my-sandbox       # Interactive terminal
-bl logs sandbox my-sandbox --follow # Stream logs
-bl delete sandbox my-sandbox        # Clean up
 ```
 
 ### Multi-workspace deployment
