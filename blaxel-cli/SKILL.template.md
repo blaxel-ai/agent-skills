@@ -74,6 +74,31 @@ bl get agents --help
 
 ## Common Workflows
 
+### Create a sandbox, run a command, and get its logs
+
+```bash
+# 1. Create a sandbox with bl apply
+bl apply -f - <<EOF
+apiVersion: blaxel.ai/v1alpha1
+kind: Sandbox
+metadata:
+  name: my-sandbox
+spec:
+  runtime:
+    image: blaxel/base-image:latest
+    memory: 2048
+EOF
+
+# 2. Wait for the sandbox to be ready
+bl get sandbox my-sandbox --watch
+
+# 3. Execute a command in the sandbox
+bl run sandbox my-sandbox --path /process --data '{"command": "echo hello world", "name": "my-cmd", "waitForCompletion": true}'
+
+# 4. Retrieve the logs for that command
+bl logs sandbox my-sandbox my-cmd
+```
+
 ### Deploy an agent
 
 ```bash
