@@ -26,6 +26,10 @@ Resource Types:
   volumetemplate - Pre-configured volume template for creating volumes
               		Use cases: Persistent storage templates, data volume configurations
 
+Template Discovery:
+Use --list to see all available templates with descriptions before creating.
+Combine with a type argument to filter: 'bl new agent --list'
+
 Interactive Mode (Recommended):
 When called without arguments, the CLI guides you through:
 1. Choosing a resource type
@@ -62,6 +66,15 @@ Examples:
   # Create job with specific template
   bl new job my-batch-job -t jobs-py
 
+  # List all available templates
+  bl new --list
+
+  # List agent templates only
+  bl new agent --list
+
+  # List templates as JSON (for machine parsing)
+  bl new --list -o json
+
   # Full workflow example:
   bl new agent my-assistant
   cd my-assistant
@@ -71,6 +84,7 @@ Examples:
 
 Flags:
   -h, --help              help for new
+  -l, --list              List available templates with descriptions
   -t, --template string   Template to use (skips interactive prompt)
   -y, --yes               Skip interactive prompts and use defaults
 

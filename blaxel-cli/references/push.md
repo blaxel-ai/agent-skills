@@ -37,12 +37,17 @@ Examples:
   # Push specifying a resource type
   bl push --type agent
 
+  # Push with a longer timeout for large images
+  bl push --timeout 30m
+
 Flags:
+      --build-env-file string       Path to a build env file with Docker build args (default: auto-detect .env.build)
   -d, --directory string            Source directory path
       --docker-config string        Path to a Docker config.json file with registry credentials
   -h, --help                        help for push
   -n, --name string                 Name for the image (defaults to directory name)
   -c, --registry-cred stringArray   Registry credentials (format: registry=username:password, repeatable)
+      --timeout string              Timeout for build log monitoring (e.g. 30m, 1h). Defaults to 15m
   -t, --type string                 Resource type (agent, function, sandbox, job). Defaults to blaxel.toml type; required if not set
   -y, --yes                         Skip interactive mode
 

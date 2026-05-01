@@ -63,10 +63,14 @@ Examples:
   # Deploy specifying a resource type
   bl deploy --type sandbox
 
+  # Deploy with Docker build args from a .env.build file
+  bl deploy --build-env-file .env.build.production
+
   # Recursively deploy all projects in monorepo
   bl deploy -R
 
 Flags:
+      --build-env-file string       Path to a build env file with Docker build args (default: auto-detect .env.build)
   -d, --directory string            Deployment app path, can be a sub directory
       --docker-config string        Path to a Docker config.json file with registry credentials
       --dryrun                      Dry run the deployment
@@ -78,6 +82,7 @@ Flags:
   -c, --registry-cred stringArray   Registry credentials (format: registry=username:password, repeatable)
   -s, --secrets strings             Secrets to deploy
       --skip-build                  Skip the build step
+      --timeout string              Timeout for build and deployment monitoring (e.g. 30m, 1h). Defaults to 15m
   -t, --type string                 Resource type (sandbox, agent, function, job). Defaults to blaxel.toml type or 'sandbox'
   -y, --yes                         Skip interactive mode
 

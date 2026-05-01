@@ -58,7 +58,7 @@ no-TTY environments (scripts, CI, agents).
 ```
 bl apply       # Apply configuration changes to resources declaratively using YAML files.
 bl chat        # Start an interactive chat session with a deployed agent.
-bl connect     # Connect into your sandbox resources with interactive interfaces
+bl connect     # Open an interactive terminal session to a sandbox
 bl delete      # Delete Blaxel resources from your workspace.
 bl deploy      # Deploy your Blaxel project to the cloud.
 bl get         # Retrieve information about Blaxel resources in your workspace.
@@ -69,7 +69,9 @@ bl new         # Create a new Blaxel resource from templates.
 bl push        # Build and push a container image to the Blaxel registry without creating a deployment.
 bl run         # Execute a Blaxel resource with custom input data.
 bl serve       # Start a local development server for your Blaxel project.
+bl share       # Share Blaxel resources with other workspaces in your account.
 bl token       # Retrieve the authentication token for the specified workspace.
+bl unshare     # Remove shared Blaxel resources from other workspaces.
 bl upgrade     # Upgrade the Blaxel CLI to the latest version.
 bl version     # Print the version number
 bl workspaces  # List and manage Blaxel workspaces.
@@ -81,8 +83,8 @@ bl workspaces  # List and manage Blaxel workspaces.
   declaratively using YAML files.
 - [chat](references/chat.md) - Start an interactive chat session with a deployed
   agent.
-- [connect](references/connect.md) - Connect into your sandbox resources with
-  interactive interfaces
+- [connect](references/connect.md) - Open an interactive terminal session to a
+  sandbox
 - [delete](references/delete.md) - Delete Blaxel resources from your workspace.
 - [deploy](references/deploy.md) - Deploy your Blaxel project to the cloud.
 - [get](references/get.md) - Retrieve information about Blaxel resources in your
@@ -97,8 +99,12 @@ bl workspaces  # List and manage Blaxel workspaces.
 - [run](references/run.md) - Execute a Blaxel resource with custom input data.
 - [serve](references/serve.md) - Start a local development server for your
   Blaxel project.
+- [share](references/share.md) - Share Blaxel resources with other workspaces in
+  your account.
 - [token](references/token.md) - Retrieve the authentication token for the
   specified workspace.
+- [unshare](references/unshare.md) - Remove shared Blaxel resources from other
+  workspaces.
 - [upgrade](references/upgrade.md) - Upgrade the Blaxel CLI to the latest
   version.
 - [version](references/version.md) - Print the version number

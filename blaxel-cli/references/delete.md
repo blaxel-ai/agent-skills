@@ -78,19 +78,19 @@ Examples:
   bl delete sandboxes $(bl get sandboxes -o json | jq -r '.[] | select(.metadata.name | test("^temp-")) | .metadata.name')
 
 Available Commands:
-  agent                 Delete agent
-  drive                 Delete drive
-  function              Delete function
+  agent                 Delete one or more agents
+  drive                 Delete one or more drives
+  function              Delete one or more functions
   image                 Delete images or image tags
-  integrationconnection Delete integrationconnection
-  job                   Delete job
-  model                 Delete model
-  policy                Delete policy
-  preview               Delete preview
-  previewtoken          Delete previewtoken
-  sandbox               Delete sandbox
-  volume                Delete volume
-  volumetemplate        Delete volumetemplate
+  integrationconnection Delete one or more integrationconnections
+  job                   Delete one or more jobs
+  model                 Delete one or more models
+  policy                Delete one or more policies
+  preview               Delete one or more previews
+  previewtoken          Delete one or more previewtokens
+  sandbox               Delete one or more sandboxes
+  volume                Delete one or more volumes
+  volumetemplate        Delete one or more volumetemplates
 
 Flags:
   -f, --filename string   containing the resource to delete.
@@ -111,10 +111,10 @@ Use "bl delete [command] --help" for more information about a command.
 
 ### agent
 
-> Delete agent
+> Delete one or more agents
 
 ```
-Delete agent
+Delete one or more agents
 
 Usage:
   bl delete agent name [name...] [flags]
@@ -135,10 +135,10 @@ Global Flags:
 
 ### drive
 
-> Delete drive
+> Delete one or more drives
 
 ```
-Delete drive
+Delete one or more drives
 
 Usage:
   bl delete drive name [name...] [flags]
@@ -159,10 +159,10 @@ Global Flags:
 
 ### function
 
-> Delete function
+> Delete one or more functions
 
 ```
-Delete function
+Delete one or more functions
 
 Usage:
   bl delete function name [name...] [flags]
@@ -228,10 +228,10 @@ Global Flags:
 
 ### job
 
-> Delete job
+> Delete one or more jobs
 
 ```
-Delete job
+Delete one or more jobs
 
 Usage:
   bl delete job name [name...] [flags]
@@ -252,10 +252,10 @@ Global Flags:
 
 ### model
 
-> Delete model
+> Delete one or more models
 
 ```
-Delete model
+Delete one or more models
 
 Usage:
   bl delete model name [name...] [flags]
@@ -276,10 +276,10 @@ Global Flags:
 
 ### policy
 
-> Delete policy
+> Delete one or more policies
 
 ```
-Delete policy
+Delete one or more policies
 
 Usage:
   bl delete policy name [name...] [flags]
@@ -300,10 +300,10 @@ Global Flags:
 
 ### preview
 
-> Delete preview
+> Delete one or more previews
 
 ```
-Delete preview
+Delete one or more previews
 
 Usage:
   bl delete preview name [name...] [flags]
@@ -324,10 +324,10 @@ Global Flags:
 
 ### previewtoken
 
-> Delete previewtoken
+> Delete one or more previewtokens
 
 ```
-Delete previewtoken
+Delete one or more previewtokens
 
 Usage:
   bl delete previewtoken name [name...] [flags]
@@ -348,10 +348,10 @@ Global Flags:
 
 ### sandbox
 
-> Delete sandbox
+> Delete one or more sandboxes
 
 ```
-Delete sandbox
+Delete one or more sandboxes
 
 Usage:
   bl delete sandbox name [name...] [flags]
@@ -372,10 +372,10 @@ Global Flags:
 
 ### volume
 
-> Delete volume
+> Delete one or more volumes
 
 ```
-Delete volume
+Delete one or more volumes
 
 Usage:
   bl delete volume name [name...] [flags]
@@ -396,10 +396,10 @@ Global Flags:
 
 ### volumetemplate
 
-> Delete volumetemplate
+> Delete one or more volumetemplates
 
 ```
-Delete volumetemplate
+Delete one or more volumetemplates
 
 Usage:
   bl delete volumetemplate name [name...] [flags]

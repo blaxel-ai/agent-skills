@@ -1,11 +1,11 @@
 # bl connect
 
-> Connect into your sandbox resources with interactive interfaces
+> Open an interactive terminal session to a sandbox
 
 ## Usage
 
 ```
-Connect into your sandbox resources with interactive interfaces
+Open an interactive terminal session to a sandbox
 
 Usage:
   bl connect [command]

@@ -17,6 +17,11 @@ A "resource" in Blaxel refers to any deployable or manageable entity:
 - volumes: Persistent storage
 - integrationconnections: External service integrations
 
+Hub Discovery (pre-built resources available in the Blaxel Hub):
+- sandbox-hub: Pre-built sandbox images with pre-installed tools and runtimes
+- mcp-hub: Pre-built MCP servers for tool integrations (GitHub, Slack, etc.)
+- templates: Project scaffolding templates for bl new
+
 Output Formats:
 Use -o flag to control output format:
 - pretty: Human-readable colored output (default)
@@ -65,6 +70,14 @@ Examples:
   # Get specific execution for a job
   bl get job my-job execution EXECUTION_ID
 
+  # List pre-built sandbox images from the Hub
+  bl get sandbox-hub
+  bl get sandbox-hub -o json
+
+  # List pre-built MCP servers from the Hub
+  bl get mcp-hub
+  bl get mcp-hub -o json
+
   # Monitor sandbox status
   bl get sandbox my-sandbox --watch
 
@@ -108,19 +121,22 @@ Examples:
   bl get agents -o json | jq 'group_by(.status) | map({status: .[0].status, count: length})'
 
 Available Commands:
-  agents                 Get a Agent
-  drives                 Get a Drive
-  functions              Get a Function
+  agents                 List all agents or get details of a specific one
+  drives                 List all drives or get details of a specific one
+  functions              List all functions or get details of a specific one
   image                  Get image information
-  integrationconnections Get a IntegrationConnection
-  jobs                   Get a Job
-  models                 Get a Model
-  policies               Get a Policy
-  previews               Get a Preview
-  previewtokens          Get a PreviewToken
-  sandboxes              Get a Sandbox
-  volumes                Get a Volume
-  volumetemplates        Get a VolumeTemplate
+  integrationconnections List all integrationconnections or get details of a specific one
+  jobs                   List all jobs or get details of a specific one
+  mcp-hub                List pre-built MCP servers available in the Blaxel Hub
+  models                 List all models or get details of a specific one
+  policies               List all policies or get details of a specific one
+  previews               List all previews or get details of a specific one
+  previewtokens          List all previewtokens or get details of a specific one
+  sandbox-hub            List pre-built sandbox images available in the Blaxel Hub
+  sandboxes              List all sandboxes or get details of a specific one
+  templates              List available project templates
+  volumes                List all volumes or get details of a specific one
+  volumetemplates        List all volumetemplates or get details of a specific one
 
 Flags:
   -h, --help    help for get
@@ -140,10 +156,10 @@ Use "bl get [command] --help" for more information about a command.
 
 ### agents
 
-> Get a Agent
+> List all agents or get details of a specific one
 
 ```
-Get a Agent
+List all agents or get details of a specific one
 
 Usage:
   bl get agents [flags]
@@ -165,10 +181,10 @@ Global Flags:
 
 ### drives
 
-> Get a Drive
+> List all drives or get details of a specific one
 
 ```
-Get a Drive
+List all drives or get details of a specific one
 
 Usage:
   bl get drives [flags]
@@ -190,10 +206,10 @@ Global Flags:
 
 ### functions
 
-> Get a Function
+> List all functions or get details of a specific one
 
 ```
-Get a Function
+List all functions or get details of a specific one
 
 Usage:
   bl get functions [flags]
@@ -273,10 +289,10 @@ Global Flags:
 
 ### jobs
 
-> Get a Job
+> List all jobs or get details of a specific one
 
 ```
-Get a Job
+List all jobs or get details of a specific one
 
 Usage:
   bl get jobs [flags]
@@ -296,177 +312,278 @@ Global Flags:
   -w, --workspace string       Specify the workspace name
 ```
 
+### mcp-hub
+
+> List pre-built MCP servers from the Blaxel Hub.
+
+````
+List pre-built MCP servers from the Blaxel Hub.
+
+These provide ready-to-use tool integrations (e.g. GitHub, Slack,
+databases). Connect one to your agent by creating an integration
+connection with 'bl apply -f connection.yaml':
+
+```yaml
+  apiVersion: blaxel/v1alpha1
+  kind: IntegrationConnection
+  metadata:
+    name: my-github
+  spec:
+    integration: <integration-from-hub>
+````
+
+Output formats: -o json Machine-readable JSON array -o yaml YAML output default
+Table with NAME, INTEGRATION, DESCRIPTION columns
+
+Usage: bl get mcp-hub [flags]
+
+Aliases: mcp-hub, function-hub
+
+Examples:
+
+# List all available MCP hub servers
+
+bl get mcp-hub
+
+# List as JSON (for automation/agents)
+
+bl get mcp-hub -o json
+
+# List as YAML
+
+bl get mcp-hub -o yaml
+
+Flags: -h, --help help for mcp-hub
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
+
+```
 ### models
 
-> Get a Model
-
-```
-Get a Model
-
-Usage:
-  bl get models [flags]
-
-Aliases:
-  models, model, ml
-
-Flags:
-  -h, --help   help for models
-
-Global Flags:
-  -o, --output string          Output format. One of: pretty,yaml,json,table
-      --skip-version-warning   Skip version warning
-  -u, --utc                    Enable UTC timezone
-  -v, --verbose                Enable verbose output
-      --watch                  After listing/getting the requested object, watch for changes.
-  -w, --workspace string       Specify the workspace name
+> List all models or get details of a specific one
 ```
 
+List all models or get details of a specific one
+
+Usage: bl get models [flags]
+
+Aliases: models, model, ml
+
+Flags: -h, --help help for models
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
+
+```
 ### policies
 
-> Get a Policy
-
-```
-Get a Policy
-
-Usage:
-  bl get policies [flags]
-
-Aliases:
-  policies, policy, pol
-
-Flags:
-  -h, --help   help for policies
-
-Global Flags:
-  -o, --output string          Output format. One of: pretty,yaml,json,table
-      --skip-version-warning   Skip version warning
-  -u, --utc                    Enable UTC timezone
-  -v, --verbose                Enable verbose output
-      --watch                  After listing/getting the requested object, watch for changes.
-  -w, --workspace string       Specify the workspace name
+> List all policies or get details of a specific one
 ```
 
+List all policies or get details of a specific one
+
+Usage: bl get policies [flags]
+
+Aliases: policies, policy, pol
+
+Flags: -h, --help help for policies
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
+
+```
 ### previews
 
-> Get a Preview
-
-```
-Get a Preview
-
-Usage:
-  bl get previews [flags]
-
-Aliases:
-  previews, preview, pv
-
-Flags:
-  -h, --help   help for previews
-
-Global Flags:
-  -o, --output string          Output format. One of: pretty,yaml,json,table
-      --skip-version-warning   Skip version warning
-  -u, --utc                    Enable UTC timezone
-  -v, --verbose                Enable verbose output
-      --watch                  After listing/getting the requested object, watch for changes.
-  -w, --workspace string       Specify the workspace name
+> List all previews or get details of a specific one
 ```
 
+List all previews or get details of a specific one
+
+Usage: bl get previews [flags]
+
+Aliases: previews, preview, pv
+
+Flags: -h, --help help for previews
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
+
+```
 ### previewtokens
 
-> Get a PreviewToken
-
-```
-Get a PreviewToken
-
-Usage:
-  bl get previewtokens [flags]
-
-Aliases:
-  previewtokens, previewtoken, pvt
-
-Flags:
-  -h, --help   help for previewtokens
-
-Global Flags:
-  -o, --output string          Output format. One of: pretty,yaml,json,table
-      --skip-version-warning   Skip version warning
-  -u, --utc                    Enable UTC timezone
-  -v, --verbose                Enable verbose output
-      --watch                  After listing/getting the requested object, watch for changes.
-  -w, --workspace string       Specify the workspace name
+> List all previewtokens or get details of a specific one
 ```
 
+List all previewtokens or get details of a specific one
+
+Usage: bl get previewtokens [flags]
+
+Aliases: previewtokens, previewtoken, pvt
+
+Flags: -h, --help help for previewtokens
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
+
+```
+### sandbox-hub
+
+> List pre-built sandbox images from the Blaxel Hub.
+```
+
+List pre-built sandbox images from the Blaxel Hub.
+
+Each image comes with pre-installed tools, runtimes, and configurations. Use the
+'image' field value in your sandbox YAML spec when deploying with 'bl apply -f
+sandbox.yaml':
+
+```yaml
+apiVersion: blaxel/v1alpha1
+kind: Sandbox
+metadata:
+  name: my-sandbox
+spec:
+  image: <image-from-hub>
+```
+
+Output formats: -o json Machine-readable JSON array -o yaml YAML output default
+Table with NAME, IMAGE, MEMORY, DESCRIPTION columns
+
+Usage: bl get sandbox-hub [flags]
+
+Aliases: sandbox-hub, sbx-hub, sandbox-images
+
+Examples:
+
+# List all available sandbox hub images
+
+bl get sandbox-hub
+
+# List as JSON (for automation/agents)
+
+bl get sandbox-hub -o json
+
+# List as YAML
+
+bl get sandbox-hub -o yaml
+
+Flags: -h, --help help for sandbox-hub
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
+
+```
 ### sandboxes
 
-> Get a Sandbox
-
-```
-Get a Sandbox
-
-Usage:
-  bl get sandboxes [flags]
-
-Aliases:
-  sandboxes, sandbox, sbx
-
-Flags:
-  -h, --help   help for sandboxes
-
-Global Flags:
-  -o, --output string          Output format. One of: pretty,yaml,json,table
-      --skip-version-warning   Skip version warning
-  -u, --utc                    Enable UTC timezone
-  -v, --verbose                Enable verbose output
-      --watch                  After listing/getting the requested object, watch for changes.
-  -w, --workspace string       Specify the workspace name
+> List all sandboxes or get details of a specific one
 ```
 
+List all sandboxes or get details of a specific one
+
+Usage: bl get sandboxes [flags]
+
+Aliases: sandboxes, sandbox, sbx
+
+Flags: -h, --help help for sandboxes
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
+
+```
+### templates
+
+> List available templates that can be used with 'bl new'.
+```
+
+List available templates that can be used with 'bl new'.
+
+Templates are grouped by type (agent, mcp, sandbox, job, volume-template). Use
+an optional type argument to filter results.
+
+Output formats: -o json Machine-readable JSON array -o yaml YAML output default
+Table with NAME, TYPE, LANGUAGE, DESCRIPTION columns
+
+Usage: bl get templates [type] [flags]
+
+Aliases: templates, template, tpl
+
+Examples:
+
+# List all templates
+
+bl get templates
+
+# List agent templates only
+
+bl get templates agent
+
+# List templates as JSON
+
+bl get templates -o json
+
+# List MCP templates
+
+bl get templates mcp
+
+Flags: -h, --help help for templates
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
+
+```
 ### volumes
 
-> Get a Volume
-
-```
-Get a Volume
-
-Usage:
-  bl get volumes [flags]
-
-Aliases:
-  volumes, volume, vol
-
-Flags:
-  -h, --help   help for volumes
-
-Global Flags:
-  -o, --output string          Output format. One of: pretty,yaml,json,table
-      --skip-version-warning   Skip version warning
-  -u, --utc                    Enable UTC timezone
-  -v, --verbose                Enable verbose output
-      --watch                  After listing/getting the requested object, watch for changes.
-  -w, --workspace string       Specify the workspace name
+> List all volumes or get details of a specific one
 ```
 
+List all volumes or get details of a specific one
+
+Usage: bl get volumes [flags]
+
+Aliases: volumes, volume, vol
+
+Flags: -h, --help help for volumes
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
+
+```
 ### volumetemplates
 
-> Get a VolumeTemplate
+> List all volumetemplates or get details of a specific one
+```
+
+List all volumetemplates or get details of a specific one
+
+Usage: bl get volumetemplates [flags]
+
+Aliases: volumetemplates, volumetemplate, vt
+
+Flags: -h, --help help for volumetemplates
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
 
 ```
-Get a VolumeTemplate
-
-Usage:
-  bl get volumetemplates [flags]
-
-Aliases:
-  volumetemplates, volumetemplate, vt
-
-Flags:
-  -h, --help   help for volumetemplates
-
-Global Flags:
-  -o, --output string          Output format. One of: pretty,yaml,json,table
-      --skip-version-warning   Skip version warning
-  -u, --utc                    Enable UTC timezone
-  -v, --verbose                Enable verbose output
-      --watch                  After listing/getting the requested object, watch for changes.
-  -w, --workspace string       Specify the workspace name
 ```
