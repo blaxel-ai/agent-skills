@@ -147,6 +147,34 @@ bl run sandbox my-sandbox --path /process --data '{"command": "echo hello world"
 bl logs sandbox my-sandbox my-cmd
 ```
 
+### Run a complex command in a sandbox (agent guideline)
+
+`bl run sandbox ... --path /process --data '<json>'` requires the JSON payload
+to survive **shell quoting**. As soon as the command embeds nested quotes,
+backslashes, multiple lines, or interpreters like `sh -lc` / `python3 -c`,
+inline `--data` becomes brittle and the API rejects the request with
+`400 Bad Request: invalid character ... in string escape code`.
+
+**Decision rule for an agent:**
+
+1. Command has **no single quotes, no backslashes, no newlines** → use
+   `--data '{"command": "...", "waitForCompletion": true}'` directly.
+2. Anything more complex (nested quotes, escapes, multiline, scripts) → **write
+   the JSON payload to a file** with your Write/file-creation tool (this
+   bypasses the shell entirely), then run with `--file`.
+
+```bash
+# Step 1 — agent writes /tmp/process.json with content like:
+# {
+#   "command": "sh -lc 'python3 -c \"print(\\\"hello\\\")\"'",
+#   "name": "cve-check",
+#   "waitForCompletion": true
+# }
+#
+# Step 2 — execute it
+bl run sandbox my-sandbox --path /process --file /tmp/process.json
+```
+
 ### Deploy an agent
 
 ```bash
