@@ -50,7 +50,7 @@ jobs:
           git checkout -b "$BRANCH"
           git add blaxel-cli/
           git commit -m "docs: regenerate blaxel-cli references for CLI ${CLI_VERSION}"
-          git push -u --force-with-lease origin "$BRANCH"
+          git push -u --force origin "$BRANCH"
 
           if gh pr view "$BRANCH" --json number --jq .number >/dev/null 2>&1; then
             echo "PR already exists for $BRANCH, skipping create."
