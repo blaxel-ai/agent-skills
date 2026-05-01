@@ -50,11 +50,15 @@ jobs:
           git checkout -b "$BRANCH"
           git add blaxel-cli/
           git commit -m "docs: regenerate blaxel-cli references for CLI ${CLI_VERSION}"
-          git push -u origin "$BRANCH"
+          git push -u --force-with-lease origin "$BRANCH"
 
-          gh pr create \
-            --title "docs: update blaxel-cli skill for CLI ${CLI_VERSION}" \
-            --body "Auto-generated from CLI release ${CLI_VERSION}. Review the updated command references and merge when ready." \
-            --assignee cploujoux
+          if gh pr view "$BRANCH" --json number --jq .number >/dev/null 2>&1; then
+            echo "PR already exists for $BRANCH, skipping create."
+          else
+            gh pr create \
+              --title "docs: update blaxel-cli skill for CLI ${CLI_VERSION}" \
+              --body "Auto-generated from CLI release ${CLI_VERSION}. Review the updated command references and merge when ready." \
+              --assignee cploujoux
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
