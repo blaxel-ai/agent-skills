@@ -61,4 +61,4 @@ jobs:
               --assignee cploujoux
           fi
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
