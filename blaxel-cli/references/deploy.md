@@ -20,6 +20,10 @@ A blaxel.toml configuration file is required. By default, the command looks
 for it in the current directory. Use -d to specify a subdirectory containing
 the blaxel.toml (useful for monorepo setups).
 
+If the blaxel.toml contains an 'image' field pointing to a registry image,
+the platform will pull the image and transform it via metamorph before deploying.
+For private registries, supply credentials via --registry-cred or --docker-config.
+
 Interactive vs Non-Interactive:
 - Interactive (default): Shows live logs and deployment progress with TUI
 - Non-interactive (--yes or CI): Runs without interactive UI, suitable for automation

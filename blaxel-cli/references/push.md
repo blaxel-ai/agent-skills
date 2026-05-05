@@ -19,7 +19,13 @@ The process includes:
 4. Building container image
 5. Streaming build logs until the image is ready
 
-You must run this command from a directory containing a blaxel.toml file.
+If the blaxel.toml contains an 'image' field pointing to a registry image
+(e.g. docker.io/myorg/myapp:latest), the platform will pull the image and
+transform it for the target runtime via metamorph. If the same image was
+already built, the build is triggered again by default. Use --skip-build to
+skip the build if the image was already built.
+
+For private registries, supply credentials via --registry-cred or --docker-config.
 
 Usage:
   bl push [flags]
@@ -37,6 +43,12 @@ Examples:
   # Push specifying a resource type
   bl push --type agent
 
+  # Push from a private registry (credentials for blaxel.toml image field)
+  bl push --registry-cred ghcr.io=user:token
+
+  # Skip rebuild if image was already built
+  bl push --skip-build
+
   # Push with a longer timeout for large images
   bl push --timeout 30m
 
@@ -47,6 +59,7 @@ Flags:
   -h, --help                        help for push
   -n, --name string                 Name for the image (defaults to directory name)
   -c, --registry-cred stringArray   Registry credentials (format: registry=username:password, repeatable)
+      --skip-build                  Skip the image build step (use existing built image if available)
       --timeout string              Timeout for build log monitoring (e.g. 30m, 1h). Defaults to 15m
   -t, --type string                 Resource type (agent, function, sandbox, job). Defaults to blaxel.toml type; required if not set
   -y, --yes                         Skip interactive mode
