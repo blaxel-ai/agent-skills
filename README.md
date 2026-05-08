@@ -12,6 +12,6 @@ npx skills add blaxel-ai/agent-skills
 ### Claude Code plugin
 ```shell
 claude plugin marketplace add blaxel-ai/agent-skills
-claude plugin install blaxel-sdk
-claude plugin install blaxel-cli
+claude plugin install blaxel
 ```
+Installs both the `blaxel-sdk` and `blaxel-cli` skills.
