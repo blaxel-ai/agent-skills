@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "blaxel",
+  "version": "1.1.0",
+  "description": "Blaxel agent skills for building and deploying AI workloads.",
+  "owner": {
+    "name": "Blaxel",
+    "email": "support@blaxel.ai",
+    "url": "https://blaxel.ai"
+  },
+  "plugins": [
+    {
+      "name": "blaxel-sdk",
+      "source": "./skills/blaxel-sdk",
+      "description": "The Blaxel SDK skill lets your agent create cloud sandboxes (microVMs) to run code, start dev servers, and generate live preview URLs. Reach for this skill when you need isolated compute environments, real-time app previews, shared file storage across sandboxes, or to deploy agentic workloads.",
+      "author": { "name": "Blaxel", "email": "support@blaxel.ai", "url": "https://blaxel.ai" },
+      "homepage": "https://docs.blaxel.ai",
+      "repository": "https://github.com/blaxel-ai/agent-skills",
+      "license": "MIT",
+      "keywords": ["sandbox", "microvm", "compute", "agent", "mcp"],
+      "category": "development",
+      "tags": ["sandbox", "isolated-compute", "ai-native"]
+    },
+    {
+      "name": "blaxel-cli",
+      "source": "./skills/blaxel-cli",
+      "description": "The Blaxel CLI skill lets your agent manage Blaxel resources from the command line using the bl CLI. Use this to deploy agents, sandboxes, jobs, and MCP servers, and to install the Blaxel CLI if not present.",
+      "author": { "name": "Blaxel", "email": "support@blaxel.ai", "url": "https://blaxel.ai" },
+      "homepage": "https://docs.blaxel.ai",
+      "repository": "https://github.com/blaxel-ai/agent-skills",
+      "license": "MIT",
+      "keywords": ["cli", "sandbox", "agent", "deploy"],
+      "category": "development",
+      "tags": ["cli", "automation", "ai-native"]
+    }
+  ]
+}

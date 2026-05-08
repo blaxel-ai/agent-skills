@@ -28,7 +28,7 @@ jobs:
           deno-version: v2.x
 
       - name: Generate docs
-        run: deno run --allow-run --allow-read --allow-write blaxel-cli/scripts/generate-docs.ts
+        run: deno run --allow-run --allow-read --allow-write skills/blaxel-cli/scripts/generate-docs.ts
 
       - name: Check for changes
         id: changes
@@ -48,7 +48,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add blaxel-cli/
+          git add skills/blaxel-cli/
           git commit -m "docs: regenerate blaxel-cli references for CLI ${CLI_VERSION}"
           git push -u --force origin "$BRANCH"
 
