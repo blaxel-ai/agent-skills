@@ -11,5 +11,7 @@ npx skills add blaxel-ai/agent-skills
 
 ### Claude Code plugin
 ```shell
-claude plugin install blaxel-ai/agent-skills
+claude plugin marketplace add vikram-blaxel/agent-skills
+claude plugin install blaxel-sdk
+claude plugin install blaxel-cli
 ```
