@@ -13,7 +13,7 @@
   "keywords": ["sandbox", "microvm", "compute", "isolation", "security", "agent", "volume", "firecracker", "cli"],
   "skills": "./skills/",
   "interface": {
-    "category": "development",
+    "category": "Development",
     "tags": ["sandbox", "isolated-compute", "ai-native", "cli"]
   }
 }
