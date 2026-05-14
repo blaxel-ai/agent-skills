@@ -1,0 +1,24 @@
+{
+  "name": "blaxel",
+  "version": "1.1.0",
+  "description": "Blaxel agent skills for building and deploying AI workloads.",
+  "owner": {
+    "name": "Blaxel",
+    "email": "support@blaxel.ai",
+    "url": "https://blaxel.ai"
+  },
+  "plugins": [
+    {
+      "name": "blaxel",
+      "source": "./skills",
+      "description": "Blaxel agent skills bundle: SDK skill for creating cloud sandboxes (microVMs) to run code, start dev servers and generate live preview URLs, plus CLI skill for managing Blaxel resources (agents, sandboxes, jobs, MCP servers) from the command line.",
+      "author": { "name": "Blaxel", "email": "support@blaxel.ai", "url": "https://blaxel.ai" },
+      "homepage": "https://docs.blaxel.ai",
+      "repository": "https://github.com/blaxel-ai/agent-skills",
+      "license": "MIT",
+      "keywords": ["sandbox", "microvm", "compute", "agent", "cli", "mcp"],
+      "category": "development",
+      "tags": ["sandbox", "isolated-compute", "ai-native", "cli"]
+    }
+  ]
+}
