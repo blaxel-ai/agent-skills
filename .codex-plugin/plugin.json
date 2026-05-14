@@ -10,5 +10,10 @@
   "homepage": "https://docs.blaxel.ai",
   "repository": "https://github.com/blaxel-ai/agent-skills",
   "license": "MIT",
-  "keywords": ["sandbox", "microvm", "compute", "isolation", "security", "agent", "volume", "firecracker", "cli"]
+  "keywords": ["sandbox", "microvm", "compute", "isolation", "security", "agent", "volume", "firecracker", "cli"],
+  "skills": "./skills/",
+  "interface": {
+    "category": "development",
+    "tags": ["sandbox", "isolated-compute", "ai-native", "cli"]
+  }
 }
