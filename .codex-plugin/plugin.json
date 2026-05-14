@@ -13,7 +13,9 @@
   "keywords": ["sandbox", "microvm", "compute", "isolation", "security", "agent", "volume", "firecracker", "cli"],
   "skills": "./skills",
   "interface": {
-    "category": "Development",
-    "tags": ["sandbox", "isolated-compute", "ai-native", "cli"]
+    "displayName": "Blaxel",
+    "shortDescription": "Build and deploy AI agents with cloud sandboxes and CLI tools.",
+    "developerName": "Blaxel",
+    "category": "Development"
   }
 }
