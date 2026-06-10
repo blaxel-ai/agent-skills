@@ -82,7 +82,7 @@ sandbox = await SandboxInstance.create_if_not_exists({
 
 Use `createIfNotExists` / `create_if_not_exists` to reuse an existing sandbox by name or create a new one.
 
-Always prefer this over a get-then-create fallback. Deleted sandboxes are kept in `TERMINATED` state for a few minutes (so their logs stay accessible), which means a plain `get` can return a dead sandbox whose gateway and preview URLs fail with workload-not-found. `createIfNotExists` checks the status for you and recreates the sandbox when the existing record is `FAILED`, `TERMINATED`, `TERMINATING`, or `DELETING`. One edge: its 3 creation retries run back-to-back, so in the few seconds right after a delete (record still `DELETING`) it can throw "Unable to create sandbox after 3 attempts" — wait a moment and retry. If you must use `get`, check `sandbox.status` before reusing the instance.
+Always prefer this over a get-then-create fallback. Deleted sandboxes are kept in `TERMINATED` state for a few minutes (so their logs stay accessible), which means a plain `get` can return a dead sandbox whose gateway and preview URLs fail with workload-not-found. `createIfNotExists` checks the status for you and recreates the sandbox when the existing record is `FAILED`, `TERMINATED`, `TERMINATING`, or `DELETING`. As of `@blaxel/core` 0.2.88 / `blaxel` 0.2.55, it also waits out the brief `DELETING` window right after a delete, so delete-then-recreate works directly. On older SDK versions that window can throw "Unable to create sandbox after 3 attempts" — wait a moment and retry, or upgrade. If you must use `get`, check `sandbox.status` before reusing the instance.
 
 ### Step 2: Write files and run commands
 
