@@ -82,6 +82,8 @@ sandbox = await SandboxInstance.create_if_not_exists({
 
 Use `createIfNotExists` / `create_if_not_exists` to reuse an existing sandbox by name or create a new one.
 
+Always prefer this over a get-then-create fallback. Deleted sandboxes are kept in `TERMINATED` state for a few minutes (so their logs stay accessible), which means a plain `get` can return a dead sandbox whose gateway and preview URLs fail with workload-not-found. `createIfNotExists` checks the status for you and recreates the sandbox when the existing record is `FAILED`, `TERMINATED`, `TERMINATING`, or `DELETING`. If you must use `get`, check `sandbox.status` before reusing the instance.
+
 ### Step 2: Write files and run commands
 
 ```typescript
@@ -104,7 +106,7 @@ const install = await sandbox.process.exec({
   command: "npm install",
   workingDir: "/app",
   waitForCompletion: true,
-  timeout: 60000,
+  timeout: 60, // seconds (default 600; 0 = no auto-kill with keepAlive)
 });
 
 // Start a long-running dev server (don't wait for completion)
@@ -129,7 +131,7 @@ install = await sandbox.process.exec({
   "command": "npm install",
   "working_dir": "/app",
   "wait_for_completion": True,
-  "timeout": 60000,
+  "timeout": 60,  # seconds (default 600; 0 = no auto-kill with keep_alive)
 })
 
 dev_server = await sandbox.process.exec({
@@ -174,7 +176,9 @@ const token = await preview.tokens.create(new Date(Date.now() + 10 * 60 * 1000))
 ### Step 4: Manage the sandbox
 
 ```typescript
-// Reconnect to an existing sandbox
+// Reconnect to an existing sandbox. Careful: get can return a recently
+// deleted sandbox still in TERMINATED state — check status before reuse,
+// or use createIfNotExists which handles this for you.
 const sandbox = await SandboxInstance.get("my-sandbox");
 
 // List files
@@ -315,8 +319,82 @@ protocol = "tcp"
 - Dev servers must bind to `0.0.0.0`, not `localhost`, for preview URLs to work
 - ~50% of sandbox memory is reserved for the in-memory filesystem (tmpfs). Use volumes for extra storage
 - Sandboxes auto-scale to zero after ~5s of inactivity. State is preserved in standby and resumes in <25ms
-- `waitForCompletion` has a max timeout of 60 seconds. For longer processes, use `process.wait()` with `maxWait`
+- Deleted sandboxes stay visible in `TERMINATED` state for a few minutes (for log access). A plain `get` can return one; use `createIfNotExists` or check `sandbox.status` before reuse
+- Process `timeout` is in seconds (default 600). It bounds `waitForCompletion`, and with `keepAlive` it auto-kills the process after the timeout (0 = no auto-kill). Ordinary long-running processes (e.g. dev servers started with `waitForPorts`) are not auto-killed by it
+- `waitForCompletion` holds the HTTP request open while the process runs (and is capped at ~58s over the sandbox MCP server). For long processes, start without it and block with `process.wait(name, { maxWait })` instead
+- `process.exec` also accepts `env` (per-process environment variables), `restartOnFailure`, and `maxRestarts`
+- Every process stdout/stderr line is exported as telemetry by default — heavy log volume causes real CPU contention. See "Disable process log export" below
 - Secrets should never go in `[env]` — use the Variables-and-secrets page in the Console
+
+## Sandbox best practices
+
+Full reference: https://docs.blaxel.ai/Sandboxes/best-practices
+
+### Bulk file upload: zip + writeBinary + unzip
+
+Never write many files with one `fs.write` per file — each call is a network round trip (~100ms), so a few hundred files takes minutes. Bundle them into a zip, upload it with one `writeBinary` call, and unzip inside the sandbox: 2 calls instead of N.
+
+```typescript
+import AdmZip from "adm-zip";
+
+const zip = new AdmZip();
+for (const f of files) zip.addFile(f.path, Buffer.from(f.content));
+
+await sandbox.fs.writeBinary("/tmp/project.zip", zip.toBuffer());
+await sandbox.process.exec({
+  name: "unzip",
+  command: "unzip -o /tmp/project.zip -d /app/project && rm /tmp/project.zip",
+  waitForCompletion: true,
+});
+```
+
+```python
+import io, zipfile
+
+buf = io.BytesIO()
+with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+    for f in files:
+        zf.writestr(f["path"], f["content"])
+
+await sandbox.fs.write_binary("/tmp/project.zip", buf.getvalue())
+await sandbox.process.exec({
+    "name": "unzip",
+    "command": "unzip -o /tmp/project.zip -d /app/project && rm /tmp/project.zip",
+    "wait_for_completion": True,
+})
+```
+
+For a handful of files, `fs.writeTree` (one batched call) is enough. If `unzip` is missing from your sandbox image, extract with `python3 -m zipfile -e /tmp/project.zip /app/project` instead, or install `unzip` in your template image.
+
+### Persist project state across sandbox recreations
+
+Do not re-clone a repo and re-run `npm install` on every cold boot. The sandbox filesystem is erased on deletion (TTL expiry or explicit delete), but you have durable options:
+
+- Volumes: durable block storage attached at sandbox creation (`volumes: [{ name, mountPath }]`). Put the project workspace and dependency cache on a volume; recreation re-attaches it and skips the re-pull. See ./references for full examples.
+- Agent Drive: shared filesystem mountable into running sandboxes (private preview). Good for state shared across several sandboxes.
+- Template images: bake heavy dependencies into a custom sandbox image so cold boots start pre-installed.
+
+Also remember: idle sandboxes go to standby (free, resumes in <25ms) — prefer letting a sandbox idle with a TTL over deleting and rebuilding it on every session.
+
+### Disable process log export
+
+By default every stdout/stderr line from sandbox processes is exported as structured telemetry. A chatty process (verbose dev server, trace-level poller) can emit thousands of lines per minute, and that export load is a known cause of CPU contention inside the sandbox.
+
+Two ways to turn it off:
+- Per sandbox: set the env var `SANDBOX_DISABLE_PROCESS_LOGGING=true` on the sandbox (e.g. `ENV SANDBOX_DISABLE_PROCESS_LOGGING=true` in your template Dockerfile, or in the sandbox env at creation).
+- Workspace-wide: an admin can disable process logging for all sandboxes in Console > Workspace settings.
+
+You lose the process logs in the Blaxel Console; reading logs through the SDK/API (`process.get`, log streaming) still works.
+
+### Common antipatterns to flag when reviewing integrations
+
+| Antipattern | Symptom | Fix |
+|---|---|---|
+| get-then-create instead of `createIfNotExists` | workload-not-found on gateway/preview URL after a delete + quick recreate (sandbox returned in `TERMINATED` state) | `createIfNotExists`, or check `sandbox.status` after `get` |
+| Re-pulling repo + reinstalling deps on every cold boot | minutes of startup on every session | volume or Agent Drive for the workspace; template image for deps |
+| One `fs.write` per file for many files | restore takes minutes (N network round trips) | zip + `writeBinary` + unzip (2 calls); `writeTree` for small sets |
+| Verbose stdout with log export left on | CPU spikes during compiles/heavy output | `SANDBOX_DISABLE_PROCESS_LOGGING=true` or workspace toggle; also lower app verbosity |
+| Deleting sandboxes on idle | cold rebuild on every return visit | let standby handle idleness; use `ttl` for cleanup |
 
 ## Agent Drive (shared filesystem)
 
