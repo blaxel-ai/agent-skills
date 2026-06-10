@@ -82,7 +82,7 @@ sandbox = await SandboxInstance.create_if_not_exists({
 
 Use `createIfNotExists` / `create_if_not_exists` to reuse an existing sandbox by name or create a new one.
 
-Always prefer this over a get-then-create fallback. Deleted sandboxes are kept in `TERMINATED` state for a few minutes (so their logs stay accessible), which means a plain `get` can return a dead sandbox whose gateway and preview URLs fail with workload-not-found. `createIfNotExists` checks the status for you and recreates the sandbox when the existing record is `FAILED`, `TERMINATED`, `TERMINATING`, or `DELETING`. If you must use `get`, check `sandbox.status` before reusing the instance.
+Always prefer this over a get-then-create fallback. Deleted sandboxes are kept in `TERMINATED` state for a few minutes (so their logs stay accessible), which means a plain `get` can return a dead sandbox whose gateway and preview URLs fail with workload-not-found. `createIfNotExists` checks the status for you and recreates the sandbox when the existing record is `FAILED`, `TERMINATED`, `TERMINATING`, or `DELETING`. One edge: its 3 creation retries run back-to-back, so in the few seconds right after a delete (record still `DELETING`) it can throw "Unable to create sandbox after 3 attempts" — wait a moment and retry. If you must use `get`, check `sandbox.status` before reusing the instance.
 
 ### Step 2: Write files and run commands
 
@@ -320,7 +320,7 @@ protocol = "tcp"
 - ~50% of sandbox memory is reserved for the in-memory filesystem (tmpfs). Use volumes for extra storage
 - Sandboxes auto-scale to zero after ~5s of inactivity. State is preserved in standby and resumes in <25ms
 - Deleted sandboxes stay visible in `TERMINATED` state for a few minutes (for log access). A plain `get` can return one; use `createIfNotExists` or check `sandbox.status` before reuse
-- Process `timeout` is in seconds (default 600). It bounds `waitForCompletion`, and with `keepAlive` it auto-kills the process after the timeout (0 = no auto-kill). Ordinary long-running processes (e.g. dev servers started with `waitForPorts`) are not auto-killed by it
+- Process `timeout` is in seconds (default 600). It bounds `waitForCompletion`: when exceeded, the call throws a timeout error (HTTP 422) but the process keeps running — re-attach with `process.get` / `process.wait` instead of assuming it failed. With `keepAlive` it auto-kills the process after the timeout (0 = no auto-kill). Ordinary long-running processes (e.g. dev servers started with `waitForPorts`) are not auto-killed by it
 - `waitForCompletion` holds the HTTP request open while the process runs (and is capped at ~58s over the sandbox MCP server). For long processes, start without it and block with `process.wait(name, { maxWait })` instead
 - `process.exec` also accepts `env` (per-process environment variables), `restartOnFailure`, and `maxRestarts`
 - Every process stdout/stderr line is exported as telemetry by default — heavy log volume causes real CPU contention. See "Disable process log export" below
