@@ -6,18 +6,18 @@
 
 ```
 Manage drives and drive mounts on sandboxes.
+```
 
-Drive CRUD:
-  bl drive list                       List all drives in the workspace
-  bl drive get <name>                 Get details of a specific drive
-  bl drive create                     Create a new drive
-  bl drive delete <name>              Delete a drive
+Drive CRUD: bl drive list List all drives in the workspace bl drive get <name>
+Get details of a specific drive bl drive create Create a new drive bl drive
+delete <name> Delete a drive
 
-Sandbox mount operations:
-  bl drive mount --sandbox <s> ...    Mount a drive to a running sandbox
-  bl drive unmount --sandbox <s> ...  Unmount a drive from a running sandbox
-  bl drive mounts --sandbox <s>       List drives mounted in a running sandbox
+Sandbox mount operations: bl drive mount --sandbox <s> ... Mount a drive to a
+running sandbox bl drive unmount --sandbox <s> ... Unmount a drive from a
+running sandbox bl drive mounts --sandbox <s> List drives mounted in a running
+sandbox
 
+```
 Usage:
   bl drive [command]
 
@@ -171,8 +171,17 @@ Examples:
   # List drives in JSON format
   bl drive list -o json
 
+  # Fetch the next page
+  bl drive list --cursor <cursor>
+
+  # Fetch every drive
+  bl drive list --all
+
 Flags:
-  -h, --help   help for list
+      --all             Fetch all pages (may be slow for large collections)
+      --cursor string   Cursor from a previous page to fetch the next page of results
+  -h, --help            help for list
+      --limit int       Maximum number of items to return (auto-paginates when above 200) (default 200)
 
 Global Flags:
   -o, --output string          Output format. One of: pretty,yaml,json,table
