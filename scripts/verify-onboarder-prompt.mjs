@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, normalize } from 'node:path';
+import { dirname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -53,8 +53,12 @@ function resolveManifestFile(manifest, relativePath, label) {
     fail(`${label} must be a relative path`);
   }
 
-  const absolutePath = normalize(join(dirname(manifestPath), relativePath));
-  if (!absolutePath.startsWith(dirname(manifestPath))) {
+  const manifestDir = dirname(manifestPath);
+  const absolutePath = normalize(join(manifestDir, relativePath));
+  if (
+    absolutePath !== manifestDir &&
+    !absolutePath.startsWith(`${manifestDir}${sep}`)
+  ) {
     fail(`${label} must stay inside prompts/onboarder/v1`);
   }
   if (!existsSync(absolutePath)) {
