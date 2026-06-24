@@ -32,7 +32,12 @@ function sendCors(response) {
 
 function resolveRequestPath(requestUrl) {
   const url = new URL(requestUrl, 'http://127.0.0.1');
-  const pathname = decodeURIComponent(url.pathname);
+  let pathname;
+  try {
+    pathname = decodeURIComponent(url.pathname);
+  } catch {
+    return null;
+  }
   const absolutePath = normalize(join(root, pathname));
 
   if (

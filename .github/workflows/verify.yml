@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   onboarder-prompt:
     runs-on: ubuntu-latest
