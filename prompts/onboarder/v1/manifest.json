@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "blaxel-onboarder",
+  "version": "0.1.0",
+  "updatedAt": "2026-06-24",
+  "skillInstallCommand": "npx skills add blaxel-ai/agent-skills",
+  "docs": [
+    "https://docs.blaxel.ai/llms.txt",
+    "https://docs.blaxel.ai/llms-full.txt",
+    "https://docs.blaxel.ai/skills-mcp"
+  ],
+  "mcp": {
+    "resourceEndpoint": "https://api.blaxel.ai/v0/mcp"
+  },
+  "files": {
+    "basePrompt": "./prompt.md",
+    "agentPackage": "./agent-package.md",
+    "supplements": {
+      "codex": "./supplements/codex.md",
+      "claude": "./supplements/claude.md",
+      "cursor": "./supplements/cursor.md"
+    }
+  }
+}
