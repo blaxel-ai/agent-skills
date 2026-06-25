@@ -29,9 +29,22 @@ node scripts/serve-onboarder-prompt.mjs --port 8767
 Run a real onboarder eval plan against installed local tools:
 
 ```shell
-node scripts/onboarder-real-eval.mjs --plan --agent codex --phase first-turn --vector all
+node scripts/onboarder-real-eval.mjs --plan --agent codex --profile local-no-auth --phase first-turn --vector all
 ```
 
+The harness contract lives in `scripts/onboarder-harness/contract.mjs`. It keeps
+the scenario vectors, local profiles, headless agent adapters, desktop targets,
+and public-repo hygiene file list in one place.
+
+Useful local profiles:
+
+- `local-no-auth`: isolated home with Blaxel auth env removed.
+- `local-env-auth`: isolated home using `BL_WORKSPACE` and `BL_API_KEY`.
+- `local-missing-bl`: isolated home with the `bl` command hidden from `PATH`.
+- `local-missing-skills`: isolated home for missing global-skill behavior.
+- `local-outdated-bl`: records whether the observed `bl version` reports an upgrade.
+
+Headless adapters are built in for Codex CLI, Claude Code, and Cursor Agent.
 To execute a real eval, add `--run` and the explicit live-run acknowledgement
 printed by the plan. Full setup runs may use live model calls and real Blaxel
 resources, so use a controlled workspace.

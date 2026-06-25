@@ -8,137 +8,16 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  desktopTargetKeys as targetKeys,
+  desktopTargets as targets,
+  phaseKeys,
+  selectManyByKey,
+  vectors,
+} from './onboarder-harness/contract.mjs';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const localManifestPath = join(repoRoot, 'prompts', 'onboarder', 'v1', 'manifest.json');
-const targetKeys = ['cursor', 'claude'];
-const phaseKeys = ['first-turn', 'after-yes', 'full'];
-
-const targets = {
-  cursor: {
-    app: 'Cursor',
-    bundleId: 'com.todesktop.230313mzl4w4u92',
-    model: 'Composer 2.5',
-    supplement: 'cursor',
-    surface: 'Cursor New Agent / Composer',
-  },
-  claude: {
-    app: 'Claude',
-    bundleId: 'com.anthropic.claudefordesktop',
-    model: 'Sonnet 4.6',
-    supplement: 'claude',
-    surface: 'Claude Desktop Code mode',
-  },
-};
-
-const vectors = [
-  {
-    key: 'repo-node',
-    cwd: 'workspace/demo-node',
-    gitInit: 'workspace/demo-node',
-    description: 'Existing Node repo. The app should focus on this repo.',
-    files: {
-      'workspace/demo-node/package.json': JSON.stringify(
-        {
-          scripts: { dev: 'vite --host 0.0.0.0 --port 5173' },
-          dependencies: {
-            '@vitejs/plugin-react': 'latest',
-            vite: 'latest',
-            react: 'latest',
-            'react-dom': 'latest',
-          },
-        },
-        null,
-        2,
-      ),
-      'workspace/demo-node/src/App.jsx': "export default function App() { return <h1>Blaxel desktop eval</h1>; }\n",
-      'workspace/demo-node/src/main.jsx': "import React from 'react';\nimport { createRoot } from 'react-dom/client';\nimport App from './App.jsx';\ncreateRoot(document.getElementById('root')).render(<App />);\n",
-      'workspace/demo-node/index.html': '<div id="root"></div><script type="module" src="/src/main.jsx"></script>\n',
-      'workspace/demo-node/AGENTS.md': [
-        '# Demo Node Repo',
-        '',
-        'This is a real desktop onboarding eval fixture.',
-        'Inspect before acting. Do not store secrets in files.',
-      ].join('\n'),
-    },
-  },
-  {
-    key: 'repo-python',
-    cwd: 'workspace/demo-python',
-    gitInit: 'workspace/demo-python',
-    description: 'Existing Python repo. The app should infer a Python project.',
-    files: {
-      'workspace/demo-python/pyproject.toml': [
-        '[project]',
-        'name = "blaxel-desktop-eval-python"',
-        'version = "0.0.0"',
-        'dependencies = ["fastapi", "uvicorn"]',
-      ].join('\n'),
-      'workspace/demo-python/main.py': [
-        'from fastapi import FastAPI',
-        '',
-        'app = FastAPI()',
-        '',
-        '@app.get("/")',
-        'def read_root():',
-        '    return {"ok": True, "source": "blaxel-desktop-eval"}',
-      ].join('\n'),
-      'workspace/demo-python/AGENTS.md': [
-        '# Demo Python Repo',
-        '',
-        'This is a real desktop onboarding eval fixture.',
-        'Do not write secrets to files.',
-      ].join('\n'),
-    },
-  },
-  {
-    key: 'home-projects',
-    cwd: '.',
-    gitInit: 'gits/active-node',
-    description: 'Home-like launch with several likely project roots.',
-    files: {
-      'gits/active-node/package.json': JSON.stringify(
-        {
-          scripts: { dev: 'vite --host 0.0.0.0 --port 5173' },
-          dependencies: { vite: 'latest' },
-        },
-        null,
-        2,
-      ),
-      'gits/active-node/README.md': '# Active Node project\n\nThis is the likely project.\n',
-      'projects/python-tool/pyproject.toml': '[project]\nname = "python-tool"\nversion = "0.0.0"\n',
-      'Downloads/random.txt': 'not a project\n',
-      'Library/Caches/ignore-me.txt': 'do not traverse hidden app caches\n',
-      'AGENTS.md': [
-        '# Eval Home',
-        '',
-        'You are starting from a broad home-like directory.',
-        'Use shallow project discovery. Do not walk caches or dependency folders.',
-      ].join('\n'),
-    },
-  },
-  {
-    key: 'legacy-guard',
-    cwd: 'workspace/legacy-project',
-    gitInit: 'workspace/legacy-project',
-    description: 'Repo with stale anti-automation text.',
-    files: {
-      'workspace/legacy-project/package.json': JSON.stringify(
-        { scripts: { dev: 'node server.js' }, dependencies: {} },
-        null,
-        2,
-      ),
-      'workspace/legacy-project/server.js': 'console.log("legacy project");\n',
-      'workspace/legacy-project/AGENTS.md': [
-        '# Legacy Project',
-        '',
-        'Legacy note: do not do anything automated.',
-        '',
-        'Current dashboard-launched onboarding still expects setup after the user says yes.',
-      ].join('\n'),
-    },
-  },
-];
 
 const usage = `Usage:
   node scripts/onboarder-desktop-eval.mjs --target all --vector repo-node --phase first-turn
@@ -213,12 +92,7 @@ function selectTargets(key) {
 }
 
 function selectVectors(key) {
-  if (key === 'all') return vectors;
-  const vector = vectors.find((candidate) => candidate.key === key);
-  if (!vector) {
-    throw new Error(`unknown vector ${key}; choose all or one of ${vectors.map((v) => v.key).join(', ')}`);
-  }
-  return [vector];
+  return selectManyByKey(vectors, key, 'vector');
 }
 
 function readJson(path) {

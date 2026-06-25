@@ -1,6 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  agentAdapters,
+  harnessContractSummary,
+  publicHygieneFiles,
+} from './onboarder-harness/contract.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = join(root, 'prompts', 'onboarder', 'v1', 'manifest.json');
@@ -15,6 +20,7 @@ const skillInstallCommand =
 const skillUpdateCommand = 'npx --yes skills update -g blaxel-cli blaxel-sdk -y';
 const skillListCommand = 'npx --no-install skills list -g --json';
 const requiredSupplementKeys = ['codex', 'claude', 'cursor'];
+const requiredHeadlessAdapters = ['codex', 'claude', 'cursor'];
 const requiredBasePromptSnippets = [
   'Do you want me to get started with setup? Reply Yes (Y/y) or No (N/n).',
   'First-glance rule:',
@@ -70,19 +76,41 @@ const requiredBasePromptSnippets = [
   'run the normal `bl login` flow',
   'This is not a feature tour.',
 ];
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const localUser = [process.env.USER, process.env.LOGNAME]
+  .find((value) => value && !['runner', 'root'].includes(value));
 const forbiddenPatterns = [
   { label: 'local user path', pattern: /\/Users\// },
-  { label: 'local username', pattern: /mstolarz/i },
   { label: 'tracker id', pattern: /\b(?:PM|ENG)-\d+\b/ },
   { label: 'OpenAI key shape', pattern: /\bsk-[A-Za-z0-9_-]{8,}\b/ },
   { label: 'Anthropic key shape', pattern: /\bsk-ant-[A-Za-z0-9_-]{8,}\b/ },
   {
-    label: 'raw API key assignment',
-    pattern: /\b(?:OPENAI|ANTHROPIC|BL)_API_KEY\b\s*[:=]/,
+    label: 'literal API key assignment',
+    pattern: /\b(?:OPENAI|ANTHROPIC|BL)_API_KEY\b\s*[:=]\s*['"][^'"]+['"]/,
   },
   {
     label: 'bearer token',
     pattern: /\bBearer\s+[A-Za-z0-9._-]{12,}/i,
+  },
+  ...(localUser
+    ? [{ label: 'current local username', pattern: new RegExp(`\\b${escapeRegExp(localUser)}\\b`, 'i') }]
+    : []),
+];
+const publicHygienePatterns = [
+  { label: 'Codex local attachment path', pattern: /\.codex\/attachments\b/i },
+  { label: 'Codex local memory path', pattern: /\.codex\/memories\b/i },
+  {
+    label: 'pasted local attachment filename',
+    pattern: new RegExp(`${['pasted', 'text'].join('-')}\\.txt`, 'i'),
+  },
+  { label: 'private notes URL', pattern: /notes\.[a-z0-9.-]+\/t\//i },
+  { label: 'internal planning placeholder', pattern: /\bTODO\(internal\)\b/i },
+  {
+    label: 'local preview query URL',
+    pattern: new RegExp(`${['localhost:', '3002'].join('')}\\/onboarder-preview`, 'i'),
   },
 ];
 
@@ -133,6 +161,24 @@ function assertNoForbiddenContent(label, content) {
       fail(`${forbidden.label} found in ${label}`);
     }
   }
+}
+
+function assertNoPublicHygieneFragments(label, content) {
+  for (const forbidden of publicHygienePatterns) {
+    if (forbidden.pattern.test(content)) {
+      fail(`${forbidden.label} found in public file ${label}`);
+    }
+  }
+}
+
+function assertPublicHygieneFile(relativePath) {
+  const absolutePath = join(root, relativePath);
+  if (!existsSync(absolutePath)) {
+    fail(`public hygiene file does not exist: ${relativePath}`);
+  }
+  const content = readFileSync(absolutePath, 'utf8');
+  assertNoForbiddenContent(relativePath, content);
+  assertNoPublicHygieneFragments(relativePath, content);
 }
 
 function buildPayload(parts, supplementKey) {
@@ -245,12 +291,46 @@ for (const snippet of requiredBasePromptSnippets) {
   }
 }
 
+for (const key of requiredHeadlessAdapters) {
+  const adapter = agentAdapters[key];
+  if (!adapter?.headless || !adapter.command || !adapter.summary) {
+    fail(`headless adapter contract is incomplete for ${key}`);
+  }
+}
+
+const contractSummary = harnessContractSummary();
+if (contractSummary.version !== 1) fail('harness contract version must be 1');
+if (contractSummary.profiles.length < 5) {
+  fail('harness contract must include the local profile matrix');
+}
+for (const requiredProfile of [
+  'local-no-auth',
+  'local-env-auth',
+  'local-missing-bl',
+  'local-missing-skills',
+  'local-outdated-bl',
+]) {
+  if (!contractSummary.profiles.some((profile) => profile.key === requiredProfile)) {
+    fail(`missing harness profile: ${requiredProfile}`);
+  }
+}
+
+for (const relativePath of publicHygieneFiles) {
+  assertPublicHygieneFile(relativePath);
+}
+
 console.log(
   JSON.stringify(
     {
       ok: true,
       manifest: 'prompts/onboarder/v1/manifest.json',
       version: manifest.version,
+      contract: {
+        version: contractSummary.version,
+        profiles: contractSummary.profiles.length,
+        vectors: contractSummary.vectors.length,
+        agents: contractSummary.agents.length,
+      },
       payloads: payloads.map(([label, payload]) => ({
         label,
         characters: payload.length,

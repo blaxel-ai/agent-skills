@@ -11,161 +11,45 @@ import {
 import { homedir, tmpdir } from 'node:os';
 import { delimiter, dirname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  agentAdapters,
+  agentKeys,
+  authModeKeys as authModes,
+  harnessContractSummary,
+  localProfiles,
+  phaseKeys as phases,
+  profileKeys,
+  selectByKey,
+  selectManyByKey,
+  vectors,
+} from './onboarder-harness/contract.mjs';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const localManifestPath = join(repoRoot, 'prompts', 'onboarder', 'v1', 'manifest.json');
-const agentKeys = ['codex', 'claude', 'cursor'];
-const phases = ['first-turn', 'after-yes', 'full'];
-const authModes = ['browser', 'env', 'ambient'];
 const isolationModes = ['temp-home', 'real-home'];
 
 const usage = `Usage:
   node scripts/onboarder-real-eval.mjs --plan
+  node scripts/onboarder-real-eval.mjs --plan --agent cursor --profile local-missing-bl --vector home-projects
   node scripts/onboarder-real-eval.mjs --run --agent codex --phase first-turn --vector repo-node --i-understand-this-runs-real-agents-and-blaxel
-  node scripts/onboarder-real-eval.mjs --run --agent codex --phase full --auth-mode env --allow-resource-creation --codex-bypass --i-understand-this-runs-real-agents-and-blaxel
+  node scripts/onboarder-real-eval.mjs --run --agent claude --phase after-yes --profile local-env-auth --allow-resource-creation --i-understand-this-runs-real-agents-and-blaxel
+  node scripts/onboarder-real-eval.mjs --run --agent cursor --phase full --profile local-env-auth --allow-resource-creation --i-understand-this-runs-real-agents-and-blaxel
 
 This is a real harness:
   - it does not stub bl or agent CLIs
   - it creates real temporary homes and project directories
-  - it runs the installed agent command
-  - it records real stdout/stderr/final messages and Blaxel CLI preflight
+  - it runs installed Codex, Claude Code, or Cursor Agent commands
+  - it records real stdout/stderr/final messages, profile evidence, and Blaxel CLI preflight
 
 Full/after-yes phases may create real Blaxel resources depending on the prompt and agent behavior.
 Use a controlled workspace/API key when running --auth-mode env.`;
-
-const vectors = [
-  {
-    key: 'empty-dir',
-    cwd: 'workspace',
-    description: 'Bare directory with only local agent instructions.',
-    files: {
-      'workspace/AGENTS.md': [
-        '# Eval Workspace',
-        '',
-        'You are in a fresh directory with no existing Blaxel config.',
-        'Use real commands and concrete proof. Do not invent credentials or resource status.',
-      ].join('\n'),
-    },
-  },
-  {
-    key: 'repo-node',
-    cwd: 'workspace/demo-node',
-    gitInit: 'workspace/demo-node',
-    description: 'Existing Node repo. The agent should focus on this repo, not scan the whole home.',
-    files: {
-      'workspace/demo-node/package.json': JSON.stringify(
-        {
-          scripts: {
-            dev: 'vite --host 0.0.0.0 --port 5173',
-          },
-          dependencies: {
-            '@vitejs/plugin-react': 'latest',
-            vite: 'latest',
-            react: 'latest',
-            'react-dom': 'latest',
-          },
-          devDependencies: {},
-        },
-        null,
-        2,
-      ),
-      'workspace/demo-node/src/App.jsx': "export default function App() { return <h1>Blaxel eval app</h1>; }\n",
-      'workspace/demo-node/src/main.jsx': "import React from 'react';\nimport { createRoot } from 'react-dom/client';\nimport App from './App.jsx';\ncreateRoot(document.getElementById('root')).render(<App />);\n",
-      'workspace/demo-node/index.html': '<div id="root"></div><script type="module" src="/src/main.jsx"></script>\n',
-      'workspace/demo-node/AGENTS.md': [
-        '# Demo Node Repo',
-        '',
-        'This is a real project fixture. Inspect before acting.',
-        'Do not store secrets in files.',
-      ].join('\n'),
-    },
-  },
-  {
-    key: 'repo-python',
-    cwd: 'workspace/demo-python',
-    gitInit: 'workspace/demo-python',
-    description: 'Existing Python repo. The agent should infer a Python app shape.',
-    files: {
-      'workspace/demo-python/pyproject.toml': [
-        '[project]',
-        'name = "blaxel-onboarder-python-eval"',
-        'version = "0.0.0"',
-        'dependencies = ["fastapi", "uvicorn"]',
-      ].join('\n'),
-      'workspace/demo-python/main.py': [
-        'from fastapi import FastAPI',
-        '',
-        'app = FastAPI()',
-        '',
-        '@app.get("/")',
-        'def read_root():',
-        '    return {"ok": True, "source": "blaxel-onboarder-eval"}',
-      ].join('\n'),
-      'workspace/demo-python/AGENTS.md': [
-        '# Demo Python Repo',
-        '',
-        'This repo is safe for live onboarding evals.',
-        'Do not write secrets to files.',
-      ].join('\n'),
-    },
-  },
-  {
-    key: 'home-projects',
-    cwd: '.',
-    gitInit: 'gits/active-node',
-    description: 'Home-directory launch with multiple likely project roots.',
-    files: {
-      'gits/active-node/package.json': JSON.stringify(
-        {
-          scripts: { dev: 'vite --host 0.0.0.0 --port 5173' },
-          dependencies: { vite: 'latest' },
-        },
-        null,
-        2,
-      ),
-      'gits/active-node/README.md': '# Active Node project\n\nThis is the most likely project.\n',
-      'projects/python-tool/pyproject.toml': '[project]\nname = "python-tool"\nversion = "0.0.0"\n',
-      'Downloads/random.txt': 'not a project\n',
-      'Library/Caches/ignore-me.txt': 'do not traverse hidden app caches\n',
-      'AGENTS.md': [
-        '# Eval Home',
-        '',
-        'You are starting from a broad home-like directory.',
-        'Use shallow project discovery. Do not walk caches or dependency folders.',
-      ].join('\n'),
-    },
-  },
-  {
-    key: 'legacy-guard',
-    cwd: 'workspace/legacy-project',
-    gitInit: 'workspace/legacy-project',
-    description: 'Repo with stale anti-automation text that should not override the dashboard-launched user task.',
-    files: {
-      'workspace/legacy-project/package.json': JSON.stringify(
-        {
-          scripts: { dev: 'node server.js' },
-          dependencies: {},
-        },
-        null,
-        2,
-      ),
-      'workspace/legacy-project/server.js': 'console.log("legacy project");\n',
-      'workspace/legacy-project/AGENTS.md': [
-        '# Legacy Project',
-        '',
-        'Legacy note: do not do anything automated.',
-        '',
-        'Current dashboard-launched onboarding still expects useful setup work after the user says yes.',
-      ].join('\n'),
-    },
-  },
-];
 
 function parseArgs(argv) {
   const options = {
     agent: 'codex',
     phase: 'first-turn',
     vector: 'repo-node',
+    profile: 'local-no-auth',
     plan: false,
     run: false,
     cleanup: false,
@@ -180,6 +64,8 @@ function parseArgs(argv) {
     timeoutMs: 15 * 60 * 1000,
     runnerCmd: '',
   };
+  let authModeProvided = false;
+  let isolationProvided = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -215,6 +101,9 @@ function parseArgs(argv) {
       case '--vector':
         options.vector = requireValue(argv, ++index, arg);
         break;
+      case '--profile':
+        options.profile = requireChoice(argv, ++index, arg, profileKeys);
+        break;
       case '--manifest-url':
         options.manifestUrl = requireValue(argv, ++index, arg);
         break;
@@ -226,9 +115,11 @@ function parseArgs(argv) {
         break;
       case '--auth-mode':
         options.authMode = requireChoice(argv, ++index, arg, authModes);
+        authModeProvided = true;
         break;
       case '--isolation':
         options.isolation = requireChoice(argv, ++index, arg, isolationModes);
+        isolationProvided = true;
         break;
       case '--timeout-ms':
         options.timeoutMs = Number(requireValue(argv, ++index, arg));
@@ -244,6 +135,9 @@ function parseArgs(argv) {
     }
   }
 
+  const profile = selectByKey(localProfiles, options.profile, 'profile');
+  if (!authModeProvided) options.authMode = profile.authMode;
+  if (!isolationProvided) options.isolation = profile.isolation;
   if (!options.plan && !options.run) options.plan = true;
   return options;
 }
@@ -266,6 +160,7 @@ function requireChoice(argv, index, flag, choices) {
 
 function assertRunArmed(options) {
   const missing = [];
+  const profile = selectByKey(localProfiles, options.profile, 'profile');
   if (!options.ackRealRun) {
     missing.push('--i-understand-this-runs-real-agents-and-blaxel');
   }
@@ -276,20 +171,37 @@ function assertRunArmed(options) {
     if (!process.env.BL_WORKSPACE) missing.push('BL_WORKSPACE');
     if (!process.env.BL_API_KEY) missing.push('BL_API_KEY');
   }
-  if (options.agent === 'codex' && !commandExists('codex')) missing.push('codex');
-  if (options.agent === 'claude' && !commandExists('claude')) missing.push('claude');
-  if (options.agent === 'cursor' && !commandExists('cursor')) missing.push('cursor');
-  if (!commandExists('bl')) missing.push('bl');
+  for (const envName of profile.requiredEnv ?? []) {
+    if (!process.env[envName]) missing.push(envName);
+  }
+  const adapter = agentAdapters[options.agent];
+  if (!adapter || !commandExists(adapter.command)) missing.push(adapter?.command ?? options.agent);
+  if (!profile.stripPathCommands?.includes('bl') && !commandExists('bl')) missing.push('bl');
 
   if (missing.length > 0) {
     throw new Error(`real onboarder eval is not armed; missing ${missing.join(', ')}`);
   }
 }
 
-function commandExists(command) {
+function commandExists(command, env = process.env) {
   return spawnSync('sh', ['-lc', `command -v ${command}`], {
+    env,
     encoding: 'utf8',
   }).status === 0;
+}
+
+function redactForEvidence(value) {
+  if (typeof value !== 'string' || value === '') return value ?? '';
+  let redacted = value;
+  for (const candidate of [homedir(), process.env.HOME]) {
+    if (candidate) redacted = redacted.split(candidate).join('$HOME');
+  }
+  const localUser = process.env.USER || process.env.LOGNAME;
+  if (localUser) {
+    const macHome = ['', 'Users', localUser].join('/');
+    redacted = redacted.split(macHome).join('$HOME');
+  }
+  return redacted;
 }
 
 function runCapture(command, args, options = {}) {
@@ -301,17 +213,17 @@ function runCapture(command, args, options = {}) {
   });
   return {
     command: [command, ...args].join(' '),
-    code: result.status,
-    stdout: result.stdout ?? '',
-    stderr: result.stderr ?? '',
+    code: result.status ?? (result.error ? 127 : null),
+    stdout: redactForEvidence(result.stdout ?? ''),
+    stderr: redactForEvidence(result.stderr || result.error?.message || ''),
   };
 }
 
-function safeProbe(command, args) {
-  if (!commandExists(command)) {
+function safeProbe(command, args, env = process.env) {
+  if (!commandExists(command, env)) {
     return { command: [command, ...args].join(' '), code: 127, stdout: '', stderr: 'command not found' };
   }
-  return runCapture(command, args, { env: process.env });
+  return runCapture(command, args, { env });
 }
 
 function gitConfigValue(key) {
@@ -360,12 +272,7 @@ function assertCleanGit(gitDir, env) {
 }
 
 function selectVectors(key) {
-  if (key === 'all') return vectors;
-  const vector = vectors.find((candidate) => candidate.key === key);
-  if (!vector) {
-    throw new Error(`unknown vector ${key}; choose all or one of ${vectors.map((v) => v.key).join(', ')}`);
-  }
-  return [vector];
+  return selectManyByKey(vectors, key, 'vector');
 }
 
 function writeFixtureFile(root, relativePath, contents) {
@@ -484,16 +391,36 @@ async function composePrompt(options) {
   };
 }
 
-function childPathForIsolatedHome(fixtureHome) {
+function commandPath(command, env = process.env) {
+  const result = spawnSync('sh', ['-lc', `command -v ${command}`], {
+    env,
+    encoding: 'utf8',
+  });
+  return result.status === 0 ? result.stdout.trim() : '';
+}
+
+function ensureEvalBin(evalBin, blockedCommands = []) {
+  mkdirSync(evalBin, { recursive: true });
+  const blocked = new Set(blockedCommands);
+  const links = [
+    ['node', process.execPath],
+    ...['npm', 'npx', 'git', 'codex', 'claude', 'cursor', 'cursor-agent']
+      .map((command) => [command, commandPath(command)]),
+  ];
+  for (const [name, target] of links) {
+    if (blocked.has(name) || !target) continue;
+    const link = join(evalBin, name);
+    if (!existsSync(link)) {
+      symlinkSync(target, link);
+    }
+  }
+}
+
+function pathWithEvalBin(evalBin, blockedCommands = []) {
   const pathValue = process.env.PATH || '';
   const originalHome = process.env.HOME || homedir();
   const homeLocalBin = normalize(join(originalHome, '.local', 'bin'));
-  const evalBin = join(fixtureHome, '.eval-bin');
-  const evalNode = join(evalBin, 'node');
-  mkdirSync(evalBin, { recursive: true });
-  if (!existsSync(evalNode)) {
-    symlinkSync(process.execPath, evalNode);
-  }
+  ensureEvalBin(evalBin, blockedCommands);
   const entries = pathValue
     .split(delimiter)
     .filter(Boolean)
@@ -502,10 +429,43 @@ function childPathForIsolatedHome(fixtureHome) {
   return [evalBin, ...entries].join(delimiter);
 }
 
+function childPathForIsolatedHome(fixtureHome, blockedCommands = []) {
+  return pathWithEvalBin(join(fixtureHome, '.eval-bin'), blockedCommands);
+}
+
+function commandDirs(command, env) {
+  const result = spawnSync('sh', ['-lc', `which -a ${command}`], {
+    env,
+    encoding: 'utf8',
+  });
+  if (result.status !== 0 || !result.stdout.trim()) return [];
+  return [...new Set(
+    result.stdout
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((path) => dirname(normalize(path))),
+  )];
+}
+
+function stripCommandsFromPath(env, commands) {
+  if (!commands?.length) return env.PATH;
+  const blockedDirs = new Set(
+    commands
+      .flatMap((command) => commandDirs(command, process.env)),
+  );
+  return (env.PATH || '')
+    .split(delimiter)
+    .filter(Boolean)
+    .filter((entry) => !blockedDirs.has(normalize(entry)))
+    .join(delimiter);
+}
+
 function buildChildEnv(options, fixture, outputDir) {
+  const profile = selectByKey(localProfiles, options.profile, 'profile');
   const env = { ...process.env };
   env.HOME = fixture.homeDir;
-  env.PATH = childPathForIsolatedHome(fixture.homeDir);
+  env.PATH = childPathForIsolatedHome(fixture.homeDir, profile.stripPathCommands ?? []);
   env.ONBOARDER_EVAL = '1';
   env.ONBOARDER_EVAL_OUTPUT_DIR = outputDir;
   env.ONBOARDER_EVAL_AUTH_MODE = options.authMode;
@@ -519,6 +479,13 @@ function buildChildEnv(options, fixture, outputDir) {
     env.BL_WORKSPACE = process.env.BL_WORKSPACE;
     env.BL_API_KEY = process.env.BL_API_KEY;
   }
+
+  for (const envName of profile.removeEnv ?? []) {
+    delete env[envName];
+  }
+
+  env.PATH = stripCommandsFromPath(env, profile.stripPathCommands ?? []);
+  env.ONBOARDER_EVAL_PROFILE = profile.key;
 
   if (options.agent === 'codex') {
     env.CODEX_HOME = process.env.CODEX_HOME || join(homedir(), '.codex');
@@ -552,7 +519,13 @@ function runStreaming(command, args, runOptions) {
     });
     child.on('close', (code, signal) => {
       clearTimeout(timer);
-      resolveResult({ code, signal, timedOut, stdout, stderr });
+      resolveResult({
+        code,
+        signal,
+        timedOut,
+        stdout: redactForEvidence(stdout),
+        stderr: redactForEvidence(stderr),
+      });
     });
 
     if (runOptions.stdin) child.stdin.write(runOptions.stdin);
@@ -651,9 +624,108 @@ async function runCodexPhase(options, fixture, prompt, outputDir) {
   return runs;
 }
 
+function parseJsonResultText(stdout) {
+  try {
+    const parsed = JSON.parse(stdout);
+    return [
+      parsed.result,
+      parsed.response,
+      parsed.text,
+      parsed.message,
+      parsed.content,
+      parsed.output,
+    ].find((value) => typeof value === 'string' && value.trim()) ?? stdout;
+  } catch {
+    return stdout;
+  }
+}
+
+async function runClaudePrompt(options, fixture, prompt, outputDir, label) {
+  const lastMessageFile = join(outputDir, `${label}-last-message.md`);
+  const args = [
+    '--print',
+    '--output-format',
+    'json',
+    '--no-session-persistence',
+    '--permission-mode',
+    options.allowResourceCreation ? 'auto' : 'plan',
+    '--model',
+    agentAdapters.claude.defaultModel,
+    prompt,
+  ];
+  const result = await runStreaming('claude', args, {
+    cwd: fixture.cwd,
+    env: buildChildEnv(options, fixture, outputDir),
+    timeoutMs: options.timeoutMs,
+  });
+  const lastMessage = parseJsonResultText(result.stdout);
+  writeFileSync(lastMessageFile, lastMessage, 'utf8');
+  return {
+    phase: label,
+    command: 'claude --print --output-format json ...',
+    ...result,
+    lastMessageFile,
+    lastMessage,
+  };
+}
+
+async function runClaudePhase(options, fixture, prompt, outputDir) {
+  const runs = [];
+  if (options.phase === 'first-turn' || options.phase === 'full') {
+    runs.push(await runClaudePrompt(options, fixture, prompt, outputDir, 'first-turn'));
+  }
+  if (options.phase === 'after-yes' || options.phase === 'full') {
+    const afterYesPrompt = `${prompt}\n\n---\n\nThe user has replied Y to the setup question. Continue with the autonomous setup now.`;
+    runs.push(await runClaudePrompt(options, fixture, afterYesPrompt, outputDir, 'after-yes'));
+  }
+  return runs;
+}
+
+async function runCursorPrompt(options, fixture, prompt, outputDir, label) {
+  const lastMessageFile = join(outputDir, `${label}-last-message.md`);
+  const args = [
+    '--print',
+    '--output-format',
+    'json',
+    '--workspace',
+    fixture.cwd,
+    '--trust',
+  ];
+  if (agentAdapters.cursor.defaultModel) {
+    args.push('--model', agentAdapters.cursor.defaultModel);
+  }
+  args.push(prompt);
+  const result = await runStreaming('cursor-agent', args, {
+    cwd: fixture.cwd,
+    env: buildChildEnv(options, fixture, outputDir),
+    timeoutMs: options.timeoutMs,
+  });
+  const lastMessage = parseJsonResultText(result.stdout);
+  writeFileSync(lastMessageFile, lastMessage, 'utf8');
+  return {
+    phase: label,
+    command: 'cursor-agent --print --output-format json ...',
+    ...result,
+    lastMessageFile,
+    lastMessage,
+  };
+}
+
+async function runCursorPhase(options, fixture, prompt, outputDir) {
+  const runs = [];
+  if (options.phase === 'first-turn' || options.phase === 'full') {
+    runs.push(await runCursorPrompt(options, fixture, prompt, outputDir, 'first-turn'));
+  }
+  if (options.phase === 'after-yes' || options.phase === 'full') {
+    const afterYesPrompt = `${prompt}\n\n---\n\nThe user has replied Y to the setup question. Continue with the autonomous setup now.`;
+    runs.push(await runCursorPrompt(options, fixture, afterYesPrompt, outputDir, 'after-yes'));
+  }
+  return runs;
+}
+
 async function runGenericAgent(options, fixture, prompt, outputDir) {
   if (!options.runnerCmd) {
-    throw new Error(`--runner-cmd is required for ${options.agent} real evals until a native adapter is added`);
+    throw new Error(`--runner-cmd is required for ${options.agent}; native adapter unavailable`);
   }
   const promptFile = join(outputDir, 'prompt.md');
   writeFileSync(promptFile, prompt, 'utf8');
@@ -668,6 +740,14 @@ async function runGenericAgent(options, fixture, prompt, outputDir) {
     timeoutMs: options.timeoutMs,
   });
   return [{ phase: options.phase, command: options.runnerCmd, ...result, lastMessage: '' }];
+}
+
+async function runAgentPhase(options, fixture, prompt, outputDir) {
+  if (options.runnerCmd) return runGenericAgent(options, fixture, prompt, outputDir);
+  if (options.agent === 'codex') return runCodexPhase(options, fixture, prompt, outputDir);
+  if (options.agent === 'claude') return runClaudePhase(options, fixture, prompt, outputDir);
+  if (options.agent === 'cursor') return runCursorPhase(options, fixture, prompt, outputDir);
+  throw new Error(`unknown agent adapter: ${options.agent}`);
 }
 
 function scoreRuns(runs, options) {
@@ -706,22 +786,45 @@ function scoreRuns(runs, options) {
 }
 
 function buildPreflight(options) {
+  const profile = selectByKey(localProfiles, options.profile, 'profile');
+  const probeEnv = { ...process.env };
+  probeEnv.PATH = pathWithEvalBin(
+    join(tmpdir(), `blaxel-onboarder-probe-${profile.key}`),
+    profile.stripPathCommands ?? [],
+  );
+  for (const envName of profile.removeEnv ?? []) {
+    delete probeEnv[envName];
+  }
+  probeEnv.PATH = stripCommandsFromPath(probeEnv, profile.stripPathCommands ?? []);
+
+  const blVersion = safeProbe('bl', ['version'], probeEnv);
+  const blVersionText = `${blVersion.stdout}\n${blVersion.stderr}`;
   const preflight = {
-    blVersion: safeProbe('bl', ['version']),
-    codexVersion: safeProbe('codex', ['--version']),
-    claudeVersion: safeProbe('claude', ['--version']),
-    cursorPath: safeProbe('sh', ['-lc', 'command -v cursor']),
+    profile: {
+      key: profile.key,
+      label: profile.label,
+      authMode: profile.authMode,
+      isolation: profile.isolation,
+      description: profile.description,
+    },
+    blVersion,
+    blUpgradeAvailable: /new version of Blaxel CLI is available/i.test(blVersionText),
+    codexVersion: safeProbe('codex', ['--version'], probeEnv),
+    claudeVersion: safeProbe('claude', ['--version'], probeEnv),
+    cursorVersion: safeProbe('cursor', ['--version'], probeEnv),
+    cursorAgentVersion: safeProbe('cursor-agent', ['--version'], probeEnv),
+    skillInventory: safeProbe('npx', ['--no-install', 'skills', 'list', '-g', '--json'], probeEnv),
     env: {
-      BL_WORKSPACE: Boolean(process.env.BL_WORKSPACE),
-      BL_API_KEY: Boolean(process.env.BL_API_KEY),
-      OPENAI_API_KEY: Boolean(process.env.OPENAI_API_KEY),
-      ANTHROPIC_API_KEY: Boolean(process.env.ANTHROPIC_API_KEY),
-      CODEX_HOME: Boolean(process.env.CODEX_HOME),
+      BL_WORKSPACE: Boolean(probeEnv.BL_WORKSPACE),
+      BL_API_KEY: Boolean(probeEnv.BL_API_KEY),
+      OPENAI_API_KEY: Boolean(probeEnv.OPENAI_API_KEY),
+      ANTHROPIC_API_KEY: Boolean(probeEnv.ANTHROPIC_API_KEY),
+      CODEX_HOME: Boolean(probeEnv.CODEX_HOME),
     },
   };
 
-  if (options.phase !== 'first-turn' || options.allowResourceCreation) {
-    preflight.blWorkspaces = safeProbe('bl', ['workspaces', '-o', 'json']);
+  if (options.allowResourceCreation) {
+    preflight.blWorkspaces = safeProbe('bl', ['workspaces', '-o', 'json'], probeEnv);
   }
 
   return preflight;
@@ -744,8 +847,9 @@ async function main() {
       {
         mode: 'plan',
         realHarness: true,
+        contract: harnessContractSummary(),
         prompt: {
-          source: promptResult.source,
+          source: redactForEvidence(promptResult.source),
           version: promptResult.version,
           agent: options.agent,
           characters: promptResult.prompt.length,
@@ -758,6 +862,7 @@ async function main() {
         options: {
           agent: options.agent,
           phase: options.phase,
+          profile: options.profile,
           authMode: options.authMode,
           isolation: options.isolation,
           codexBypass: options.codexBypass,
@@ -788,24 +893,23 @@ async function main() {
     const vectorOutputDir = join(outputDir, vector.key);
     mkdirSync(vectorOutputDir, { recursive: true });
     const fixture = prepareVector(vector, vectorOutputDir, options);
-    const runs = options.agent === 'codex'
-      ? await runCodexPhase(options, fixture, promptResult.prompt, vectorOutputDir)
-      : await runGenericAgent(options, fixture, promptResult.prompt, vectorOutputDir);
+    const runs = await runAgentPhase(options, fixture, promptResult.prompt, vectorOutputDir);
     const score = scoreRuns(runs, options);
     const result = {
       mode: 'run',
       realHarness: true,
       prompt: {
-        source: promptResult.source,
+        source: redactForEvidence(promptResult.source),
         version: promptResult.version,
         agent: options.agent,
         characters: promptResult.prompt.length,
       },
+      profile: selectByKey(localProfiles, options.profile, 'profile'),
       vector: {
         key: vector.key,
         description: vector.description,
-        cwd: fixture.cwd,
-        home: fixture.homeDir,
+        cwd: redactForEvidence(fixture.cwd),
+        home: redactForEvidence(fixture.homeDir),
       },
       preflight,
       runs,
