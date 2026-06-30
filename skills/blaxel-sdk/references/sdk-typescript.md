@@ -136,7 +136,7 @@ const process = await sandbox.process.exec({
   command: "npm run build",
   workingDir: "/app",
   waitForCompletion: true,
-  timeout: 60000 // 60 seconds
+  timeout: 60 // seconds (default 600)
 });
 
 // Kill a running process
@@ -274,7 +274,7 @@ console.log(execution.status, execution.metadata);
 // Wait for completion
 try {
   const result = await job.waitForExecution(executionId, {
-    maxWait: 300000,  // 5 minutes (milliseconds)
+    maxWait: 300000,  // 5 minutes, in milliseconds (default 360000)
     interval: 2000,   // Poll every 2 seconds (milliseconds)
   });
   console.log(`Completed: ${result.status}`);

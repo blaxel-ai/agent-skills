@@ -60,7 +60,7 @@ Flags:
   -n, --name string                 Name for the image (defaults to directory name)
   -c, --registry-cred stringArray   Registry credentials (format: registry=username:password, repeatable)
       --skip-build                  Skip the image build step (use existing built image if available)
-      --timeout string              Timeout for build log monitoring (e.g. 30m, 1h). Defaults to 15m
+      --timeout string              Timeout for build log monitoring (e.g. 30m, 1h). Defaults to 1h
   -t, --type string                 Resource type (agent, function, sandbox, job). Defaults to blaxel.toml type; required if not set
   -y, --yes                         Skip interactive mode
 

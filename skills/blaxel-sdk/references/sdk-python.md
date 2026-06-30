@@ -144,7 +144,7 @@ async def main():
         "command": "npm run build",
         "working_dir": "/app",
         "wait_for_completion": True,
-        "timeout": 60000  # 60 seconds
+        "timeout": 60  # seconds (default 600)
     })
 
     # Kill a running process
@@ -294,7 +294,7 @@ async def main():
     try:
         result = await job.await_for_execution(
             execution_id,
-            max_wait=300,  # 5 minutes (seconds)
+            max_wait=300,  # 5 minutes, in seconds (default 360)
             interval=2     # Poll every 2 seconds
         )
         print(f"Completed: {result.status}")

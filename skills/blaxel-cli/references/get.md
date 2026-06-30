@@ -168,7 +168,10 @@ Aliases:
   agents, agent, ag
 
 Flags:
-  -h, --help   help for agents
+      --all             Fetch all pages (may be slow for large collections)
+      --cursor string   Cursor from a previous page to fetch the next page of results
+  -h, --help            help for agents
+      --limit int       Maximum number of items to return (auto-paginates when above 200) (default 200)
 
 Global Flags:
   -o, --output string          Output format. One of: pretty,yaml,json,table
@@ -193,7 +196,10 @@ Aliases:
   drives, drive, drv
 
 Flags:
-  -h, --help   help for drives
+      --all             Fetch all pages (may be slow for large collections)
+      --cursor string   Cursor from a previous page to fetch the next page of results
+  -h, --help            help for drives
+      --limit int       Maximum number of items to return (auto-paginates when above 200) (default 200)
 
 Global Flags:
   -o, --output string          Output format. One of: pretty,yaml,json,table
@@ -218,7 +224,10 @@ Aliases:
   functions, function, fn, mcp, mcps
 
 Flags:
-  -h, --help   help for functions
+      --all             Fetch all pages (may be slow for large collections)
+      --cursor string   Cursor from a previous page to fetch the next page of results
+  -h, --help            help for functions
+      --limit int       Maximum number of items to return (auto-paginates when above 200) (default 200)
 
 Global Flags:
   -o, --output string          Output format. One of: pretty,yaml,json,table
@@ -301,7 +310,10 @@ Aliases:
   jobs, job, jb
 
 Flags:
-  -h, --help   help for jobs
+      --all             Fetch all pages (may be slow for large collections)
+      --cursor string   Cursor from a previous page to fetch the next page of results
+  -h, --help            help for jobs
+      --limit int       Maximum number of items to return (auto-paginates when above 200) (default 200)
 
 Global Flags:
   -o, --output string          Output format. One of: pretty,yaml,json,table
@@ -372,7 +384,10 @@ Usage: bl get models [flags]
 
 Aliases: models, model, ml
 
-Flags: -h, --help help for models
+Flags: --all Fetch all pages (may be slow for large collections) --cursor string
+Cursor from a previous page to fetch the next page of results -h, --help help
+for models --limit int Maximum number of items to return (auto-paginates when
+above 200) (default 200)
 
 Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
 --skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
@@ -391,7 +406,10 @@ Usage: bl get policies [flags]
 
 Aliases: policies, policy, pol
 
-Flags: -h, --help help for policies
+Flags: --all Fetch all pages (may be slow for large collections) --cursor string
+Cursor from a previous page to fetch the next page of results -h, --help help
+for policies --limit int Maximum number of items to return (auto-paginates when
+above 200) (default 200)
 
 Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
 --skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
@@ -497,7 +515,10 @@ Usage: bl get sandboxes [flags]
 
 Aliases: sandboxes, sandbox, sbx
 
-Flags: -h, --help help for sandboxes
+Flags: --all Fetch all pages (may be slow for large collections) --cursor string
+Cursor from a previous page to fetch the next page of results -h, --help help
+for sandboxes --limit int Maximum number of items to return (auto-paginates when
+above 200) (default 200)
 
 Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
 --skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
@@ -559,7 +580,10 @@ Usage: bl get volumes [flags]
 
 Aliases: volumes, volume, vol
 
-Flags: -h, --help help for volumes
+Flags: --all Fetch all pages (may be slow for large collections) --cursor string
+Cursor from a previous page to fetch the next page of results -h, --help help
+for volumes --limit int Maximum number of items to return (auto-paginates when
+above 200) (default 200)
 
 Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
 --skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
