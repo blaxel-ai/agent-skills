@@ -5,7 +5,7 @@
       "name": "blaxel",
       "source": {
         "source": "local",
-        "path": "./plugins/blaxel"
+        "path": "."
       },
       "policy": {
         "installation": "AVAILABLE",
