@@ -4,7 +4,7 @@
   "version": "0.9.0",
   "updatedAt": "2026-07-08",
   "skillInstallCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
-  "skillUpdateCommand": "npx --yes skills update -g blaxel-cli blaxel-sdk -y",
+  "skillUpdateCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
   "skillListCommand": "npx --no-install skills list -g --json",
   "docs": [
     "https://docs.blaxel.ai/llms.txt",
