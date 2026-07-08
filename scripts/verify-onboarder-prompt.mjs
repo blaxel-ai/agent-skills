@@ -15,9 +15,8 @@ const requiredDocs = [
   'https://docs.blaxel.ai/llms-full.txt',
   'https://docs.blaxel.ai/skills-mcp',
 ];
-const skillInstallCommand =
-  'npx --yes skills add blaxel-ai/agent-skills -g --skill blaxel-cli blaxel-sdk -y';
-const skillUpdateCommand = 'npx --yes skills update -g blaxel-cli blaxel-sdk -y';
+const skillInstallCommand = 'npx -y skills add blaxel-ai/agent-skills -g --all';
+const skillUpdateCommand = 'npx -y skills add blaxel-ai/agent-skills -g --all';
 const skillListCommand = 'npx --no-install skills list -g --json';
 const requiredSupplementKeys = ['codex', 'claude', 'cursor'];
 const requiredHeadlessAdapters = ['codex', 'claude', 'cursor'];

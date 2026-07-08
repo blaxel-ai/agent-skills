@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "blaxel-onboarder",
-  "version": "0.8.0",
-  "updatedAt": "2026-06-24",
-  "skillInstallCommand": "npx --yes skills add blaxel-ai/agent-skills -g --skill blaxel-cli blaxel-sdk -y",
-  "skillUpdateCommand": "npx --yes skills update -g blaxel-cli blaxel-sdk -y",
+  "version": "0.9.0",
+  "updatedAt": "2026-07-08",
+  "skillInstallCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
+  "skillUpdateCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
   "skillListCommand": "npx --no-install skills list -g --json",
   "docs": [
     "https://docs.blaxel.ai/llms.txt",

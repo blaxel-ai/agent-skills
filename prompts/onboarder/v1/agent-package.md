@@ -3,7 +3,7 @@
 Official Blaxel agent skills:
 
 ```shell
-npx --yes skills add blaxel-ai/agent-skills -g --skill blaxel-cli blaxel-sdk -y
+npx -y skills add blaxel-ai/agent-skills -g --all
 ```
 
 Check installed global skills:
@@ -15,7 +15,7 @@ npx --no-install skills list -g --json
 Update installed Blaxel skills to the latest package version:
 
 ```shell
-npx --yes skills update -g blaxel-cli blaxel-sdk -y
+npx -y skills add blaxel-ai/agent-skills -g --all
 ```
 
 The Blaxel skills package includes:
