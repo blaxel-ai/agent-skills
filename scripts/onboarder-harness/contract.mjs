@@ -1,7 +1,7 @@
-export const harnessContractVersion = 2;
+export const harnessContractVersion = 3;
 
 export const agentKeys = ['codex', 'claude', 'cursor'];
-export const phaseKeys = ['first-turn', 'after-go', 'full'];
+export const phaseKeys = ['setup'];
 export const authModeKeys = ['browser', 'env', 'ambient'];
 export const isolationModeKeys = ['temp-home', 'real-home'];
 
@@ -12,9 +12,8 @@ export const agentAdapters = {
     command: 'codex',
     versionArgs: ['--version'],
     headless: true,
-    supportsResume: true,
-    defaultModel: null,
-    summary: 'Runs `codex exec` non-interactively and records the last assistant message.',
+    defaultModel: 'gpt-5.4',
+    summary: 'Runs `codex exec` with an explicit compatible model and records the last assistant message.',
   },
   claude: {
     key: 'claude',
@@ -22,7 +21,6 @@ export const agentAdapters = {
     command: 'claude',
     versionArgs: ['--version'],
     headless: true,
-    supportsResume: false,
     defaultModel: 'sonnet',
     summary: 'Runs `claude --print --output-format json` against the fixture workspace.',
   },
@@ -32,7 +30,6 @@ export const agentAdapters = {
     command: 'cursor-agent',
     versionArgs: ['--version'],
     headless: true,
-    supportsResume: false,
     defaultModel: null,
     summary: 'Runs `cursor-agent --print --output-format json --trust` against the fixture workspace.',
   },
@@ -65,7 +62,7 @@ export const localProfiles = [
     isolation: 'temp-home',
     removeEnv: ['BL_WORKSPACE', 'BL_API_KEY'],
     stripPathCommands: [],
-    description: 'Default first-turn and login-gate profile. It removes Blaxel auth env vars and uses an isolated home.',
+    description: 'Default bounded-setup and browser-approval profile. It removes Blaxel auth env vars and uses an isolated home.',
   },
   {
     key: 'local-env-auth',
@@ -75,7 +72,7 @@ export const localProfiles = [
     requiredEnv: ['BL_WORKSPACE', 'BL_API_KEY'],
     removeEnv: [],
     stripPathCommands: [],
-    description: 'Controlled full-setup profile for CI or local runs with explicit Blaxel workspace credentials.',
+    description: 'Controlled bounded-setup profile for CI or local runs with explicit Blaxel workspace credentials.',
   },
   {
     key: 'local-ambient-auth',
@@ -93,7 +90,7 @@ export const localProfiles = [
     isolation: 'temp-home',
     removeEnv: ['BL_WORKSPACE', 'BL_API_KEY'],
     stripPathCommands: ['bl'],
-    description: 'Removes the Blaxel CLI from PATH to verify the prompt handles install guidance and gates cleanly.',
+    description: 'Removes the Blaxel command from PATH to verify launch consent drives automatic installation and version proof.',
   },
   {
     key: 'local-missing-skills',
@@ -102,7 +99,7 @@ export const localProfiles = [
     isolation: 'temp-home',
     removeEnv: ['BL_WORKSPACE', 'BL_API_KEY'],
     stripPathCommands: [],
-    description: 'Uses an isolated home so global skill inventory starts empty or unavailable without mutating the real home.',
+    description: 'Uses an isolated home to verify launch consent drives global skill installation and installed-list proof.',
   },
   {
     key: 'local-outdated-bl',
@@ -111,7 +108,7 @@ export const localProfiles = [
     isolation: 'temp-home',
     removeEnv: ['BL_WORKSPACE', 'BL_API_KEY'],
     stripPathCommands: [],
-    description: 'Records whether `bl version` reports an available upgrade. This is observed, not faked.',
+    description: 'Records whether `bl version` reports an available upgrade so bounded setup can refresh it. This is observed, not faked.',
   },
 ];
 
@@ -137,6 +134,7 @@ export const vectors = [
     cwd: 'workspace/demo-node',
     kind: 'repo',
     gitInit: 'workspace/demo-node',
+    expectedProjectPath: 'demo-node',
     description: 'Existing Node repo. The agent should focus on this repo, not scan the whole home.',
     files: {
       'workspace/demo-node/package.json': JSON.stringify(
@@ -171,6 +169,7 @@ export const vectors = [
     cwd: 'workspace/demo-python',
     kind: 'repo',
     gitInit: 'workspace/demo-python',
+    expectedProjectPath: 'demo-python',
     description: 'Existing Python repo. The agent should infer a Python app shape.',
     files: {
       'workspace/demo-python/pyproject.toml': [
@@ -201,6 +200,7 @@ export const vectors = [
     cwd: '.',
     kind: 'home',
     gitInit: 'gits/active-node',
+    expectedProjectPath: 'gits/active-node',
     description: 'Home-directory launch with multiple likely project roots.',
     files: {
       'gits/active-node/package.json': JSON.stringify(
@@ -228,6 +228,7 @@ export const vectors = [
     cwd: 'workspace/legacy-project',
     kind: 'repo',
     gitInit: 'workspace/legacy-project',
+    expectedProjectPath: 'legacy-project',
     description: 'Repo with stale anti-automation text that should not override the dashboard-launched user task.',
     files: {
       'workspace/legacy-project/package.json': JSON.stringify(
@@ -244,7 +245,7 @@ export const vectors = [
         '',
         'Legacy note: do not do anything automated.',
         '',
-        'Current dashboard-launched onboarding still expects the bounded local bootstrap now and useful proof work after the user says go.',
+        'Current dashboard-launched onboarding expects bounded local bootstrap now without another setup confirmation.',
       ].join('\n'),
     },
   },
@@ -261,6 +262,10 @@ export const publicHygieneFiles = [
   'prompts/onboarder/v1/supplements/cursor.md',
   'scripts/onboarder-desktop-eval.mjs',
   'scripts/onboarder-harness/contract.mjs',
+  'scripts/onboarder-harness/evaluator.mjs',
+  'scripts/onboarder-harness/evaluator.test.mjs',
+  'scripts/onboarder-harness/filesystem.mjs',
+  'scripts/onboarder-harness/filesystem.test.mjs',
   'scripts/onboarder-real-eval.mjs',
   'scripts/serve-onboarder-prompt.mjs',
   'scripts/verify-onboarder-prompt.mjs',
@@ -282,6 +287,7 @@ export function selectManyByKey(items, key, label) {
 export function harnessContractSummary() {
   return {
     version: harnessContractVersion,
+    phases: phaseKeys,
     agents: Object.values(agentAdapters).map((adapter) => ({
       key: adapter.key,
       label: adapter.label,
@@ -300,6 +306,7 @@ export function harnessContractSummary() {
       key: vector.key,
       kind: vector.kind,
       cwd: vector.cwd,
+      expectedProjectPath: vector.expectedProjectPath ?? null,
       description: vector.description,
     })),
   };

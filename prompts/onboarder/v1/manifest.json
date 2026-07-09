@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "blaxel-onboarder",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "updatedAt": "2026-07-09",
   "skillInstallCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
   "skillUpdateCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",

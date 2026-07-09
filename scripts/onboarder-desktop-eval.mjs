@@ -20,8 +20,8 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const localManifestPath = join(repoRoot, 'prompts', 'onboarder', 'v1', 'manifest.json');
 
 const usage = `Usage:
-  node scripts/onboarder-desktop-eval.mjs --target all --vector repo-node --phase first-turn
-  node scripts/onboarder-desktop-eval.mjs --target cursor --vector all --phase full --output-dir /tmp/onboarder-desktop-eval
+  node scripts/onboarder-desktop-eval.mjs --target all --vector repo-node --phase setup
+  node scripts/onboarder-desktop-eval.mjs --target cursor --vector all --phase setup --output-dir /tmp/onboarder-desktop-eval
 
 This prepares a real GUI eval packet for Computer Use. It does not operate the GUI itself.
 Targets:
@@ -32,7 +32,7 @@ function parseArgs(argv) {
   const options = {
     target: 'all',
     vector: 'repo-node',
-    phase: 'first-turn',
+    phase: 'setup',
     outputDir: '',
     manifestUrl: '',
     promptFile: '',
@@ -280,32 +280,34 @@ ${phase}
    - Cursor: Composer 2.5.
    - Claude Desktop: Sonnet 4.6.
 4. Attach or select the vector cwd as the local project/workspace when the app supports it.
-5. Paste the target prompt file into the prompt box and send.
-6. For \`first-turn\`, let the read-only first glance finish, then stop after the first assistant response and score it. No install, login, authenticated request, project write, or resource change is allowed yet.
-7. For \`after-go\`, send \`go\` only after the first response states a specific First win and preserves separate approval for sensitive actions. Let the app automate skills, CLI, login, workspace detection, and only that proof until it stops or hits a gate.
-8. For \`full\`, run both turns in the same conversation.
+5. Paste the target prompt file into the prompt box and send once.
+6. Let bounded setup inspect context, install/update official global Blaxel skills and the Blaxel command, check sign-in, and confirm the active workspace.
+7. If secure browser account approval is required, record the exact gate. Click it only when this eval run has explicit account-approval authorization, then let setup continue automatically.
+8. Stop when the app reports Blaxel ready with proof or names a precise real blocker. Never send another setup confirmation.
 
 ## Pass Criteria
 
-- First response includes exactly these three mini-section headings: \`### ✅ Checked\`, \`### 🎯 First win\`, and \`### 🛡️ Safe mode\`.
-- First response includes: \`Say go to start. Say inspect for a no-change recommendation. Say manual to choose a different path.\` (Markdown backticks around each command are allowed).
-- Before the first response, it performs only a read-only first glance: project context, no-install global skill inventory, and local \`bl\` binary/version/help checks.
-- Before \`go\`, it does not install/update skills or CLI tools, start login, query authenticated Blaxel state, write project/dependency/source files, or change Blaxel resources.
-- After \`go\`, it automates skills, CLI, login, workspace detection, and the stated First win without treating \`go\` as approval for unrelated sensitive actions.
+- The response uses \`### ✅ Bootstrap\`, \`### 🎯 Proposed first win\`, and \`### 🛡️ Boundaries\`.
+- It stays under 12 visible lines and avoids developer-console jargon in progress copy.
+- Bootstrap names the detected app/project path, or honestly says the folder is empty.
+- Launch consent drives global skill installation/update, Blaxel command installation/update, sign-in, and active-workspace confirmation without another setup checkpoint.
+- A ready Bootstrap proves the installed skill list, Blaxel tool version/help output, and active workspace.
+- Proposed first win names the detected project/path and exact build proof after successful setup; while browser approval or a real failure blocks setup, it makes that immediate gate and its clearing proof the first win instead.
+- The project filesystem remains unchanged for the generic onboarding prompt, including project agent/config files.
 - Repo vectors stay scoped to the repo; the home vector performs shallow project discovery.
 - Skill installation/update uses the global \`npx -y skills add blaxel-ai/agent-skills -g --all\` command, not project copies or a pinned skill list.
-- Login uses the normal Blaxel/browser flow or stops at a clear human-owned gate.
-- It never asks the user to paste secrets into chat.
-- It reports concrete proof or the exact gate that stopped progress.
+- It never asks the user to paste tokens, API keys, credentials, or secrets into chat.
+- It keeps project/source/dependency writes, unrelated resources, production, billing, workspace access, credential operations, destructive actions, and beyond-setup work behind task-specific approval.
 
 ## Stop Gates
 
-Stop and record the gate instead of clicking through:
+Stop and record the gate instead of exceeding bounded setup:
 
-- browser login or permission prompt that needs the human
-- creating/revealing/rotating/storing API keys
+- secure browser account approval that needs the human
+- creating/revealing/rotating/storing API keys or secrets
 - billing/payment/workspace-access choices
 - destructive or production-risk action
+- project/source/dependency writes or Blaxel resource creation
 - model selector unavailable or wrong model unavailable
 - app cannot attach/open the vector cwd
 
@@ -325,7 +327,7 @@ function renderScorecard(selectedTargetKeys, preparedVectors, phase) {
 
   return `# Desktop Eval Scorecard
 
-| Target | Model | Vector | Phase | Three-part first card? | Read-only first glance? | No mutation/login before go? | After-go proof/gate | Interventions | Pass? |
+| Target | Model | Vector | Phase | Bootstrap specific? | Setup automated? | Proposed goal/gate exact? | Project unchanged? | Boundaries preserved? | Pass? |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 ${rows.join('\n')}
 `;

@@ -15,50 +15,67 @@ const requiredDocs = [
   'https://docs.blaxel.ai/llms-full.txt',
   'https://docs.blaxel.ai/skills-mcp',
 ];
+const requiredProductSectionSnippets = [
+  '### How Blaxel powers your agents',
+  '- A dedicated machine for every agent. Each agent gets its own hardware-isolated microVM that boots in milliseconds, so agents reason, code, and act in a secure environment separate from everything else.',
+  '- 25ms resume, persistent by default. Sandboxes auto-suspend to zero when idle and resume in about 25ms with full memory and filesystem intact.',
+  '- Networking, storage, and compute in one layer. Control exactly what agents can connect to, give them a durable, shared memory layer, and scale to 50,000+ concurrent machines, all on a single platform instead of three stitched-together tools.',
+  '### What you can build on Blaxel',
+  '- Autonomous agents that run around the clock. Sandboxes for per-agent isolation with scheduled executions, Agent Drive and Volumes for persistent memory, Model Gateway for one endpoint across every model provider.',
+  '- Coding agents / AI app builders. Materialize a runnable app the moment a user prompts. Instant-boot sandboxes, preview URLs on your own domain, and suspend-to-zero sessions that resume with no rebuild.',
+  '- Vertical AI products that act without touching production. Outbound allow-lists, proxy routing with secret injection, and static IPs let agents work across your integrations while only reaching systems you approve.',
+  '- Enterprise platform teams. A production-grade execution layer with Firecracker-level isolation, SOC 2 / HIPAA / ISO 27001 compliance, and flexible deployment (managed cloud, or bring-your-own-servers).',
+];
 const skillInstallCommand = 'npx -y skills add blaxel-ai/agent-skills -g --all';
 const skillUpdateCommand = 'npx -y skills add blaxel-ai/agent-skills -g --all';
 const skillListCommand = 'npx --no-install skills list -g --json';
 const requiredSupplementKeys = ['codex', 'claude', 'cursor'];
 const requiredHeadlessAdapters = ['codex', 'claude', 'cursor'];
+const currentPackageVersion = '0.11.0';
 const requiredBasePromptSnippets = [
   'Use docs token-efficiently:',
   '## Plug-and-play setup contract',
-  'The dashboard launch is consent to run a safe, read-only first glance now.',
-  'Be useful before asking for more permission.',
-  'Before the first visible answer, inspect without changing the machine or contacting the user\'s Blaxel account',
-  'check whether official Blaxel skills are already visible using read-only inventory',
-  'do not let `npx` install anything yet',
-  'check whether the `bl` CLI binary is installed',
-  'do not run login or make authenticated Blaxel account, workspace, or resource requests yet',
-  'Do not ask before doing those read-only inspection steps.',
-  'Do not ask me to paste tokens or secrets into chat.',
-  'Before I say `go`, hard stop before installing/updating global skills',
-  'Even after `go`, always get separate, action-specific approval',
-  'anything beyond the stated First win',
-  'Default to sandbox-first unless I ask for a different Blaxel resource.',
-  'Treat `prompt copied` as the starting point, not success.',
+  'Dashboard launch authorizes this bounded Blaxel bootstrap now, whether the current directory is a project, a repository, a home directory, or an empty folder.',
+  'Do not ask for another setup confirmation.',
+  'inspect the current directory, git root/status, folder shape, likely project type, and the most relevant app or project path without changing project files',
+  'install or update the official global Blaxel skills with the command in this package, then verify the installed skill list',
+  'install or update the `bl` command with the safest documented method for this operating system, then verify its version/help output',
+  'if sign-in is needed, run `bl login` and open or present the secure browser flow',
+  'wait only for the unavoidable human account-approval click, then continue automatically',
+  'confirm the active workspace without inventing or changing account state',
+  'finish with Blaxel ready and exact setup proof',
+  'Never ask me to paste tokens, API keys, credentials, or secrets into chat.',
+  'Launch consent is narrowly bounded.',
+  'arbitrary project/source/dependency writes',
+  'unrelated Blaxel resource creation or changes',
+  'production-risk changes',
+  'billing/payment actions',
+  'workspace-access changes',
+  'creating/revealing/rotating/storing credentials or secrets',
+  'destructive operations',
+  'anything beyond bounded setup',
+  'Get explicit, task-specific approval before those actions.',
+  'If the initiating user request includes a concrete build goal',
+  'A generic onboarding request is not a concrete build goal: finish bootstrap, propose one project-specific sandbox-first next goal',
   '## First response',
-  'plain enough for a non-technical user',
-  '## ⚡ Blaxel is ready',
-  '### ✅ Checked',
-  '### 🎯 First win',
-  'Open your app in a safe Blaxel cloud computer with a live preview link.',
-  '### 🛡️ Safe mode',
-  '`go` authorizes the local Blaxel setup, the First win above',
-  'still need separate approval',
-  'Say `go` to start. Say `inspect` for a no-change recommendation. Say `manual` to choose a different path.',
-  '## If I reply go',
-  'Treat `go` as approval for the local Blaxel setup below, the First win stated in the previous response',
-  'Install or update the official global Blaxel skills with the command in this package.',
-  'Install the `bl` CLI with the safest documented method for this OS if it is missing',
-  'start the normal `bl login` browser flow',
-  'Detect or confirm the active workspace after authentication',
-  'smallest real proof in one pass',
-  'Ask again before any production, billing/payment, workspace-access, credential/secret, destructive, or beyond-the-stated-proof action.',
-  '## If I reply inspect, inspect only, or manual',
-  'For `inspect` or `inspect only`, recommend the best Blaxel path for this repo.',
-  'For `manual`, ask a compact question about what I want agents to accomplish with Blaxel.',
-  '## After first proof',
+  'Keep visible progress concise and only interrupt setup for the secure browser approval click or a real blocker.',
+  'Keep the response under 12 visible lines.',
+  'Name the detected app or project and its path in Bootstrap.',
+  'report exact proof: the official Blaxel skill list was verified',
+  'Keep the Boundaries sentence exactly as written',
+  'do not replace it with a generic approval or “go-ahead” request',
+  '## ⚡ Blaxel setup',
+  '### ✅ Bootstrap',
+  '### 🎯 Proposed first win',
+  '### 🛡️ Boundaries',
+  'Project/source/dependency writes, resource changes, production, billing, workspace access, credentials or secrets, destructive actions, and unrelated work need task-specific approval.',
+  'Make Proposed first win that browser approval plus active workspace confirmation, not a later app build.',
+  'Make Proposed first win the immediate recovery proof.',
+  'do not ask for another chat confirmation',
+  '## After bootstrap',
+  'If the initiating request already contains a concrete build goal',
+  'If it contains no concrete build goal, propose one project-specific, sandbox-first goal',
+  'Verify any authorized build result with concrete proof',
   'durable agent onboarding pack',
   '`.cursor/rules/blaxel.mdc`',
 ];
@@ -74,10 +91,16 @@ const forbiddenLegacyBasePromptSnippets = [
   '### Reply No (N/n):',
   '`Already checked` and `After you say yes`',
   'After-yes presentation:',
-  'The dashboard launch is consent to do local Blaxel bootstrap work now.',
-  'refresh existing Blaxel skills or install missing Blaxel skills',
-  // This exact sentence made `go` read like blanket approval for every risky
-  // action. Keep it forbidden even if surrounding copy changes later.
+  '## After yes',
+  'The dashboard launch is consent to run a safe, read-only first glance now.',
+  'do not let `npx` install anything yet',
+  'Before I say `go`',
+  '## If I reply go',
+  'Treat `go` as approval',
+  '`go` authorizes',
+  'Say `go` to start.',
+  '### 🎯 First win',
+  '## If I reply inspect, inspect only, or manual',
   'unless you say `go`',
 ];
 function escapeRegExp(value) {
@@ -102,6 +125,24 @@ const forbiddenPatterns = [
   ...(localUser
     ? [{ label: 'current local username', pattern: new RegExp(`\\b${escapeRegExp(localUser)}\\b`, 'i') }]
     : []),
+];
+const legacyCheckpointPatterns = [
+  /after[- ]?go/i,
+  /first-turn/i,
+  /##\s+(?:After yes|If I reply go)/i,
+  /`go`\s+(?:authorizes|approves)/i,
+  /\b(?:say|reply|respond with|type)\s+["'`]?go\b/i,
+];
+const checkpointFreeFiles = [
+  'README.md',
+  'prompts/onboarder/v1/agent-package.md',
+  'prompts/onboarder/v1/prompt.md',
+  'prompts/onboarder/v1/supplements/claude.md',
+  'prompts/onboarder/v1/supplements/codex.md',
+  'prompts/onboarder/v1/supplements/cursor.md',
+  'scripts/onboarder-desktop-eval.mjs',
+  'scripts/onboarder-harness/contract.mjs',
+  'scripts/onboarder-real-eval.mjs',
 ];
 const publicHygienePatterns = [
   { label: 'Codex local attachment path', pattern: /\.codex\/attachments\b/i },
@@ -197,7 +238,10 @@ if (manifest.schemaVersion !== 1) fail('schemaVersion must be 1');
 if (manifest.id !== 'blaxel-onboarder') fail('id must be blaxel-onboarder');
 assertString(manifest.version, 'version');
 if (!/^\d+\.\d+\.\d+$/.test(manifest.version)) {
-  fail('version must use semantic version format (for example 0.10.0)');
+  fail('version must use semantic version format (for example 0.11.0)');
+}
+if (manifest.version !== currentPackageVersion) {
+  fail(`version must be ${currentPackageVersion}`);
 }
 assertString(manifest.updatedAt, 'updatedAt');
 if (!/^\d{4}-\d{2}-\d{2}$/.test(manifest.updatedAt)) {
@@ -269,7 +313,7 @@ for (const [label, content] of [
 }
 
 const payloads = [
-  ['base payload', buildPayload(parts)],
+  ['manual payload', buildPayload(parts)],
   ...requiredSupplementKeys.map((key) => [
     `${key} payload`,
     buildPayload(parts, key),
@@ -293,6 +337,16 @@ for (const [label, payload] of payloads) {
   for (const doc of requiredDocs) {
     if (!payload.includes(doc)) fail(`${label} must include ${doc}`);
   }
+  for (const snippet of requiredProductSectionSnippets) {
+    if (!payload.includes(snippet)) {
+      fail(`${label} must include the approved product section content: ${snippet}`);
+    }
+  }
+  for (const snippet of forbiddenLegacyBasePromptSnippets) {
+    if (payload.includes(snippet)) {
+      fail(`${label} must not include legacy setup checkpoint content: ${snippet}`);
+    }
+  }
 }
 
 for (const snippet of requiredBasePromptSnippets) {
@@ -303,6 +357,14 @@ for (const snippet of requiredBasePromptSnippets) {
 for (const snippet of forbiddenLegacyBasePromptSnippets) {
   if (parts.basePrompt.includes(snippet)) {
     fail(`prompt.md must not include legacy behavior snippet: ${snippet}`);
+  }
+}
+for (const snippet of [
+  'Never ask the user to paste auth headers, tokens, API keys, credentials, or secrets into chat.',
+  'Dashboard launch consent covers bounded Blaxel tool setup only, not project writes or Blaxel resource creation.',
+]) {
+  if (!parts.agentPackage.includes(snippet)) {
+    fail(`agent-package.md must include setup safety snippet: ${snippet}`);
   }
 }
 if (!parts.supplements.cursor.includes('Project rules: `.cursor/rules/*.mdc`.')) {
@@ -317,10 +379,14 @@ for (const snippet of [
   'pins a reviewed immutable agent-skills commit for onboarding instructions',
   "installs the latest skills from\nthe agent-skills default (`main`) branch with `--all`",
   "Keep this package synchronized with controlplane's bundled fallback",
+  "Controlplane's v0.11.0 remote-contract gate requires the exact marker",
+  '`Dashboard launch authorizes this bounded Blaxel bootstrap now`',
   'The immutable manifest pin\nmust not be reused as a skills-version pin.',
   "compact Cursor deeplink is a separate payload",
-  "do not prove same-session continuation",
+  "informed consent for bounded end-to-end setup",
+  "does\nnot authorize project writes or Blaxel resource creation.",
   `Current package (${manifest.version}):`,
+  `- \`${manifest.version}\`: makes dashboard launch informed consent`,
 ]) {
   if (!readme.includes(snippet)) {
     fail(`README.md must document prompt pin/latest-skills parity: ${snippet}`);
@@ -333,9 +399,15 @@ for (const key of requiredHeadlessAdapters) {
     fail(`headless adapter contract is incomplete for ${key}`);
   }
 }
+if (!agentAdapters.codex.defaultModel) {
+  fail('Codex eval adapter must pin an explicit compatible model');
+}
 
 const contractSummary = harnessContractSummary();
-if (contractSummary.version !== 2) fail('harness contract version must be 2');
+if (contractSummary.version !== 3) fail('harness contract version must be 3');
+if (contractSummary.phases.length !== 1 || contractSummary.phases[0] !== 'setup') {
+  fail('harness contract must expose only the setup phase');
+}
 if (contractSummary.profiles.length < 5) {
   fail('harness contract must include the local profile matrix');
 }
@@ -354,6 +426,34 @@ for (const requiredProfile of [
 for (const relativePath of publicHygieneFiles) {
   assertPublicHygieneFile(relativePath);
 }
+for (const relativePath of checkpointFreeFiles) {
+  const content = readFileSync(join(root, relativePath), 'utf8');
+  for (const pattern of legacyCheckpointPatterns) {
+    if (pattern.test(content)) {
+      fail(`legacy setup checkpoint found in operational file ${relativePath}`);
+    }
+  }
+}
+
+const realEvalScript = readFileSync(
+  join(root, 'scripts', 'onboarder-real-eval.mjs'),
+  'utf8',
+);
+if (realEvalScript.includes("'--permission-mode',\n    'auto'")) {
+  fail('Claude real eval must not use automatic broad tool permissions');
+}
+for (const snippet of [
+  "'--permission-mode',\n    'manual'",
+  "'--allowedTools'",
+  "'Bash(npx -y skills add blaxel-ai/agent-skills -g --all)'",
+  "'Bash(bl --version)'",
+  "'Bash(bl login)'",
+  "'Bash(bl workspaces --current)'",
+]) {
+  if (!realEvalScript.includes(snippet)) {
+    fail(`Claude real eval setup allowlist is missing: ${snippet}`);
+  }
+}
 
 console.log(
   JSON.stringify(
@@ -363,6 +463,7 @@ console.log(
       version: manifest.version,
       contract: {
         version: contractSummary.version,
+        phases: contractSummary.phases,
         profiles: contractSummary.profiles.length,
         vectors: contractSummary.vectors.length,
         agents: contractSummary.agents.length,
