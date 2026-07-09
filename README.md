@@ -4,10 +4,18 @@ Agent skills for building and deploying AI workloads on Blaxel.
 
 ## Onboarder prompt package
 
-Controlplane consumes the versioned onboarding prompt package from this repo so
-prompt and skill updates can ship independently from the dashboard UI.
+Controlplane consumes the versioned onboarding prompt package from this repo. It
+pins a reviewed immutable agent-skills commit for onboarding instructions, while
+the prompt's install/update command intentionally installs the latest skills from
+the agent-skills default (`main`) branch with `--all`. The immutable manifest pin
+must not be reused as a skills-version pin.
 
-Current package:
+Keep this package synchronized with controlplane's bundled fallback whenever the
+onboarding contract changes. The fallback is only for package-fetch failure; it
+must preserve the same bootstrap, safety, and response behavior as the reviewed
+package commit.
+
+Current package (0.10.0):
 
 - Manifest: [`prompts/onboarder/v1/manifest.json`](prompts/onboarder/v1/manifest.json)
 - Base prompt: [`prompts/onboarder/v1/prompt.md`](prompts/onboarder/v1/prompt.md)
@@ -49,29 +57,34 @@ To execute a real eval, add `--run` and the explicit live-run acknowledgement
 printed by the plan. Full setup runs may use live model calls and real Blaxel
 resources, so use a controlled workspace.
 
-Prepare the current high-fidelity desktop GUI eval packet for Computer Use:
+Prepare the desktop GUI eval packet for the full manifest payload:
 
 ```shell
 node scripts/onboarder-desktop-eval.mjs --target all --vector all --phase first-turn
 ```
 
-This creates real temporary project workspaces plus prompts for Cursor Composer
-2.5 and Claude Desktop Sonnet 4.6. Use the generated `RUNBOOK.md` and
-`scorecard.md` while driving the apps with Computer Use.
+This creates real temporary project workspaces plus full-package prompts for
+Cursor Composer 2.5 and Claude Desktop Sonnet 4.6. Use the generated `RUNBOOK.md`
+and `scorecard.md` while driving the apps with Computer Use. Controlplane's
+compact Cursor deeplink is a separate payload; its content parity and URL-length
+gate are verified by the controlplane onboarder tests, not by this desktop packet.
+
+Codex supports a resumed same-session `full` headless run. The Claude and Cursor
+headless adapters use a fresh synthetic `after-go` invocation, so those runs
+validate phase behavior but do not prove same-session continuation.
 
 Check or refresh global Blaxel skills:
 
 ```shell
 npx --no-install skills list -g --json
-npx --yes skills update -g blaxel-cli blaxel-sdk -y
-npx --yes skills add blaxel-ai/agent-skills -g --skill blaxel-cli blaxel-sdk -y
+npx -y skills add blaxel-ai/agent-skills -g --all
 ```
 
 ## Installation
 
 ### npx skills
 ```shell
-npx --yes skills add blaxel-ai/agent-skills -g --skill blaxel-cli blaxel-sdk -y
+npx -y skills add blaxel-ai/agent-skills -g --all
 ```
 
 ### Claude Code plugin
