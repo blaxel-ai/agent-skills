@@ -23,14 +23,16 @@ const requiredHeadlessAdapters = ['codex', 'claude', 'cursor'];
 const requiredBasePromptSnippets = [
   'Use docs token-efficiently:',
   '## Plug-and-play setup contract',
-  'The dashboard launch is consent to do local Blaxel bootstrap work now.',
+  'The dashboard launch is consent to run a safe, read-only first glance now.',
   'Be useful before asking for more permission.',
-  'Before the first visible answer, run a bounded local preflight',
-  'refresh existing Blaxel skills or install missing Blaxel skills',
-  'check whether CLI auth/workspace is already usable',
-  'Do not ask before doing those local Blaxel setup steps.',
+  'Before the first visible answer, inspect without changing the machine or contacting the user\'s Blaxel account',
+  'check whether official Blaxel skills are already visible using read-only inventory',
+  'do not let `npx` install anything yet',
+  'check whether the `bl` CLI binary is installed',
+  'do not run login or make authenticated Blaxel account, workspace, or resource requests yet',
+  'Do not ask before doing those read-only inspection steps.',
   'Do not ask me to paste tokens or secrets into chat.',
-  'Before I say `go`, hard stop before writing project files',
+  'Before I say `go`, hard stop before installing/updating global skills',
   'Even after `go`, always get separate, action-specific approval',
   'anything beyond the stated First win',
   'Default to sandbox-first unless I ask for a different Blaxel resource.',
@@ -42,12 +44,15 @@ const requiredBasePromptSnippets = [
   '### 🎯 First win',
   'Open your app in a safe Blaxel cloud computer with a live preview link.',
   '### 🛡️ Safe mode',
-  '`go` authorizes only the First win above',
+  '`go` authorizes the local Blaxel setup, the First win above',
   'still need separate approval',
   'Say `go` to start. Say `inspect` for a no-change recommendation. Say `manual` to choose a different path.',
   '## If I reply go',
-  'Treat `go` as approval only for the First win stated in the previous response',
-  'Continue from the completed local setup without re-asking about skills, CLI, or login.',
+  'Treat `go` as approval for the local Blaxel setup below, the First win stated in the previous response',
+  'Install or update the official global Blaxel skills with the command in this package.',
+  'Install the `bl` CLI with the safest documented method for this OS if it is missing',
+  'start the normal `bl login` browser flow',
+  'Detect or confirm the active workspace after authentication',
   'smallest real proof in one pass',
   'Ask again before any production, billing/payment, workspace-access, credential/secret, destructive, or beyond-the-stated-proof action.',
   '## If I reply inspect, inspect only, or manual',
@@ -69,9 +74,11 @@ const forbiddenLegacyBasePromptSnippets = [
   '### Reply No (N/n):',
   '`Already checked` and `After you say yes`',
   'After-yes presentation:',
+  'The dashboard launch is consent to do local Blaxel bootstrap work now.',
+  'refresh existing Blaxel skills or install missing Blaxel skills',
+  // This exact sentence made `go` read like blanket approval for every risky
+  // action. Keep it forbidden even if surrounding copy changes later.
   'unless you say `go`',
-  '## If I reply inspect only or manual',
-  'For `inspect only`, recommend the best Blaxel path for this repo.',
 ];
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -188,11 +195,13 @@ const manifest = readJson(manifestPath);
 
 if (manifest.schemaVersion !== 1) fail('schemaVersion must be 1');
 if (manifest.id !== 'blaxel-onboarder') fail('id must be blaxel-onboarder');
-if (manifest.version !== '0.10.0') {
-  fail('version must be 0.10.0 for the consent-contract update');
+assertString(manifest.version, 'version');
+if (!/^\d+\.\d+\.\d+$/.test(manifest.version)) {
+  fail('version must use semantic version format (for example 0.10.0)');
 }
-if (manifest.updatedAt !== '2026-07-09') {
-  fail('updatedAt must be 2026-07-09 for the prompt parity release');
+assertString(manifest.updatedAt, 'updatedAt');
+if (!/^\d{4}-\d{2}-\d{2}$/.test(manifest.updatedAt)) {
+  fail('updatedAt must use YYYY-MM-DD format');
 }
 if (manifest.skillInstallCommand !== skillInstallCommand) {
   fail('skillInstallCommand must match the published install command');

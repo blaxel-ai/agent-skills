@@ -548,7 +548,7 @@ function codexBaseArgs(options, cwd, lastMessageFile) {
 }
 
 function buildSyntheticAfterGoPrompt(prompt) {
-  return `${prompt}\n\n---\n\nThe user has replied go. Go authorizes only the First win stated above and the minimum non-production project or resource changes needed for that proof. Continue from the completed local bootstrap and work toward that verified Blaxel proof now. Stop for separate action-specific approval before production, billing/payment, workspace-access, credential/secret, destructive, or beyond-the-stated-proof actions.`;
+  return `${prompt}\n\n---\n\nThe user has replied go. Go authorizes the local Blaxel setup, the First win stated above, and the minimum non-production project or resource changes needed for that proof. Continue from the completed read-only first glance: install or update the official Blaxel skills, install the bl CLI if missing, start normal browser login if needed, confirm the active workspace, and work toward that verified proof. Stop for separate action-specific approval before production, billing/payment, workspace-access, credential/secret, destructive, or beyond-the-stated-proof actions.`;
 }
 
 async function runCodexPhase(options, fixture, prompt, outputDir) {
@@ -766,7 +766,7 @@ function scoreRuns(runs, options) {
         '### ✅ Checked',
         '### 🎯 First win',
         '### 🛡️ Safe mode',
-        '`go` authorizes only the First win above',
+        '`go` authorizes the local Blaxel setup, the First win above',
         'still need separate approval',
         'Say `go` to start. Say `inspect` for a no-change recommendation. Say `manual` to choose a different path.',
       ].every((snippet) => first.lastMessage.includes(snippet)),
