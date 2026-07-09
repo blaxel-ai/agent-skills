@@ -1,10 +1,14 @@
 import { spawn, spawnSync } from 'node:child_process';
 import {
+  closeSync,
+  constants,
   existsSync,
+  fstatSync,
   mkdirSync,
+  mkdtempSync,
+  openSync,
   readFileSync,
   rmSync,
-  statSync,
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -23,31 +27,62 @@ import {
   selectManyByKey,
   vectors,
 } from './onboarder-harness/contract.mjs';
+import { scoreRuns } from './onboarder-harness/evaluator.mjs';
+import {
+  compareProjectFilesystems,
+  snapshotProjectFilesystem,
+} from './onboarder-harness/filesystem.mjs';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const localManifestPath = join(repoRoot, 'prompts', 'onboarder', 'v1', 'manifest.json');
 const isolationModes = ['temp-home', 'real-home'];
+const claudeSetupAllowedTools = [
+  'Read',
+  'Glob',
+  'Grep',
+  'Bash(pwd)',
+  'Bash(ls)',
+  'Bash(ls -la)',
+  'Bash(uname -s)',
+  'Bash(sw_vers -productVersion)',
+  'Bash(git rev-parse --show-toplevel)',
+  'Bash(git status --short --branch)',
+  'Bash(command -v bl)',
+  'Bash(npx -y skills add blaxel-ai/agent-skills -g --all)',
+  'Bash(npx --no-install skills list -g --json)',
+  'Bash(bl version)',
+  'Bash(bl --version)',
+  'Bash(bl --help)',
+  'Bash(bl upgrade)',
+  'Bash(bl workspaces)',
+  'Bash(bl workspaces --current)',
+  'Bash(bl login)',
+  'Bash(brew tap blaxel-ai/blaxel)',
+  'Bash(brew install blaxel)',
+  'Bash(curl -fsSL https://raw.githubusercontent.com/blaxel-ai/toolkit/main/install.sh | sh)',
+];
 
 const usage = `Usage:
   node scripts/onboarder-real-eval.mjs --plan
   node scripts/onboarder-real-eval.mjs --plan --agent cursor --profile local-missing-bl --vector home-projects
-  node scripts/onboarder-real-eval.mjs --run --agent codex --phase first-turn --vector repo-node --i-understand-this-runs-real-agents-and-blaxel
-  node scripts/onboarder-real-eval.mjs --run --agent claude --phase after-go --profile local-env-auth --allow-resource-creation --i-understand-this-runs-real-agents-and-blaxel
-  node scripts/onboarder-real-eval.mjs --run --agent cursor --phase full --profile local-env-auth --allow-resource-creation --i-understand-this-runs-real-agents-and-blaxel
+  node scripts/onboarder-real-eval.mjs --run --agent codex --phase setup --vector repo-node --i-understand-this-runs-real-agents-and-blaxel
+  node scripts/onboarder-real-eval.mjs --run --agent claude --phase setup --profile local-env-auth --i-understand-this-runs-real-agents-and-blaxel
+  node scripts/onboarder-real-eval.mjs --run --agent cursor --phase setup --profile local-env-auth --i-understand-this-runs-real-agents-and-blaxel
 
 This is a real harness:
-  - it does not stub bl or agent CLIs
+  - it does not stub the Blaxel command or agent CLIs
   - it creates real temporary homes and project directories
   - it runs installed Codex, Claude Code, or Cursor Agent commands
-  - it records real stdout/stderr/final messages, profile evidence, and Blaxel CLI preflight
+  - it allows the prompt to install/update global Blaxel tools and open secure login
+  - it records real stdout/stderr/final messages, profile evidence, and local preflight
 
-Full/after-go phases may create real Blaxel resources depending on the prompt and agent behavior.
+The generic harness prompt authorizes bounded setup only and does not authorize project writes or Blaxel resource creation.
 Use a controlled workspace/API key when running --auth-mode env.`;
 
 function parseArgs(argv) {
   const options = {
     agent: 'codex',
-    phase: 'first-turn',
+    phase: 'setup',
     vector: 'repo-node',
     profile: 'local-no-auth',
     plan: false,
@@ -59,7 +94,6 @@ function parseArgs(argv) {
     authMode: 'browser',
     isolation: 'temp-home',
     codexBypass: false,
-    allowResourceCreation: false,
     ackRealRun: false,
     timeoutMs: 15 * 60 * 1000,
     runnerCmd: '',
@@ -85,9 +119,6 @@ function parseArgs(argv) {
         break;
       case '--codex-bypass':
         options.codexBypass = true;
-        break;
-      case '--allow-resource-creation':
-        options.allowResourceCreation = true;
         break;
       case '--i-understand-this-runs-real-agents-and-blaxel':
         options.ackRealRun = true;
@@ -164,9 +195,6 @@ function assertRunArmed(options) {
   if (!options.ackRealRun) {
     missing.push('--i-understand-this-runs-real-agents-and-blaxel');
   }
-  if ((options.phase === 'after-go' || options.phase === 'full') && !options.allowResourceCreation) {
-    missing.push('--allow-resource-creation');
-  }
   if (options.authMode === 'env') {
     if (!process.env.BL_WORKSPACE) missing.push('BL_WORKSPACE');
     if (!process.env.BL_API_KEY) missing.push('BL_API_KEY');
@@ -175,8 +203,9 @@ function assertRunArmed(options) {
     if (!process.env[envName]) missing.push(envName);
   }
   const adapter = agentAdapters[options.agent];
-  if (!adapter || !commandExists(adapter.command)) missing.push(adapter?.command ?? options.agent);
-  if (!profile.stripPathCommands?.includes('bl') && !commandExists('bl')) missing.push('bl');
+  if (!options.runnerCmd && (!adapter || !commandExists(adapter.command))) {
+    missing.push(adapter?.command ?? options.agent);
+  }
 
   if (missing.length > 0) {
     throw new Error(`real onboarder eval is not armed; missing ${missing.join(', ')}`);
@@ -224,6 +253,41 @@ function safeProbe(command, args, env = process.env) {
     return { command: [command, ...args].join(' '), code: 127, stdout: '', stderr: 'command not found' };
   }
   return runCapture(command, args, { env });
+}
+
+function readOptionalRegularFileNoFollow(path) {
+  let descriptor;
+  try {
+    descriptor = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  } catch (error) {
+    if (error?.code === 'ENOENT') return null;
+    throw error;
+  }
+
+  try {
+    if (!fstatSync(descriptor).isFile()) {
+      throw new Error(`expected a regular result file: ${path}`);
+    }
+    return readFileSync(descriptor, 'utf8');
+  } finally {
+    closeSync(descriptor);
+  }
+}
+
+function writeNewPrivateFileNoFollow(path, contents) {
+  const descriptor = openSync(
+    path,
+    constants.O_WRONLY |
+      constants.O_CREAT |
+      constants.O_EXCL |
+      constants.O_NOFOLLOW,
+    0o600,
+  );
+  try {
+    writeFileSync(descriptor, contents, 'utf8');
+  } finally {
+    closeSync(descriptor);
+  }
 }
 
 function gitConfigValue(key) {
@@ -430,7 +494,10 @@ function pathWithEvalBin(evalBin, blockedCommands = []) {
 }
 
 function childPathForIsolatedHome(fixtureHome, blockedCommands = []) {
-  return pathWithEvalBin(join(fixtureHome, '.eval-bin'), blockedCommands);
+  return [
+    join(fixtureHome, '.local', 'bin'),
+    pathWithEvalBin(join(fixtureHome, '.eval-bin'), blockedCommands),
+  ].join(delimiter);
 }
 
 function commandDirs(command, env) {
@@ -494,6 +561,12 @@ function buildChildEnv(options, fixture, outputDir) {
   return env;
 }
 
+function snapshotFixtureFilesystem(fixture) {
+  return snapshotProjectFilesystem(fixture.cwd, {
+    ignoreRootRuntime: resolve(fixture.cwd) === resolve(fixture.homeDir),
+  });
+}
+
 function runStreaming(command, args, runOptions) {
   return new Promise((resolveResult) => {
     const child = spawn(command, args, {
@@ -536,96 +609,46 @@ function runStreaming(command, args, runOptions) {
 function codexBaseArgs(options, cwd, lastMessageFile) {
   const args = [
     'exec',
+    '--ephemeral',
     '--skip-git-repo-check',
     '--cd',
     cwd,
     '--output-last-message',
     lastMessageFile,
   ];
-  if (options.phase !== 'full') args.push('--ephemeral');
+  if (agentAdapters.codex.defaultModel) {
+    args.push('--model', agentAdapters.codex.defaultModel);
+  }
   if (options.codexBypass) args.push('--dangerously-bypass-approvals-and-sandbox');
   return args;
 }
 
-function buildSyntheticAfterGoPrompt(prompt) {
-  return `${prompt}\n\n---\n\nThe user has replied go. Go authorizes the local Blaxel setup, the First win stated above, and the minimum non-production project or resource changes needed for that proof. Continue from the completed read-only first glance: install or update the official Blaxel skills, install the bl CLI if missing, start normal browser login if needed, confirm the active workspace, and work toward that verified proof. Stop for separate action-specific approval before production, billing/payment, workspace-access, credential/secret, destructive, or beyond-the-stated-proof actions.`;
-}
-
 async function runCodexPhase(options, fixture, prompt, outputDir) {
   const env = buildChildEnv(options, fixture, outputDir);
-  const runs = [];
-
-  if (options.phase === 'first-turn' || options.phase === 'full') {
-    const firstLast = join(outputDir, 'first-last-message.md');
-    const result = await runStreaming(
-      'codex',
-      [...codexBaseArgs(options, fixture.cwd, firstLast), '-'],
-      {
-        cwd: fixture.cwd,
-        env,
-        stdin: prompt,
-        timeoutMs: options.timeoutMs,
-      },
-    );
-    runs.push({
-      phase: 'first-turn',
-      command: 'codex exec ... -',
-      ...result,
-      lastMessageFile: firstLast,
-      lastMessage: existsSync(firstLast) ? readFileSync(firstLast, 'utf8') : '',
-    });
-  }
-
-  if (options.phase === 'after-go') {
-    const afterGoLast = join(outputDir, 'after-go-last-message.md');
-    const afterGoPrompt = buildSyntheticAfterGoPrompt(prompt);
-    const result = await runStreaming(
-      'codex',
-      [...codexBaseArgs(options, fixture.cwd, afterGoLast), '-'],
-      {
-        cwd: fixture.cwd,
-        env,
-        stdin: afterGoPrompt,
-        timeoutMs: options.timeoutMs,
-      },
-    );
-    runs.push({
-      phase: 'after-go',
-      command: 'codex exec ... -',
-      ...result,
-      lastMessageFile: afterGoLast,
-      lastMessage: existsSync(afterGoLast) ? readFileSync(afterGoLast, 'utf8') : '',
-    });
-  }
-
-  if (options.phase === 'full') {
-    const secondLast = join(outputDir, 'second-last-message.md');
-    const args = [
-      'exec',
-      'resume',
-      '--last',
-      '--all',
-      '--skip-git-repo-check',
-      '--output-last-message',
-      secondLast,
-      'go',
-    ];
-    if (options.codexBypass) args.push('--dangerously-bypass-approvals-and-sandbox');
-    const result = await runStreaming('codex', args, {
+  const lastMessageFile = join(outputDir, 'setup-last-message.md');
+  const filesystemBefore = snapshotFixtureFilesystem(fixture);
+  const result = await runStreaming(
+    'codex',
+    [...codexBaseArgs(options, fixture.cwd, lastMessageFile), '-'],
+    {
       cwd: fixture.cwd,
       env,
+      stdin: prompt,
       timeoutMs: options.timeoutMs,
-    });
-    runs.push({
-      phase: 'after-go',
-      command: 'codex exec resume --last --all go',
-      ...result,
-      lastMessageFile: secondLast,
-      lastMessage: existsSync(secondLast) ? readFileSync(secondLast, 'utf8') : '',
-    });
-  }
+    },
+  );
+  const filesystemAfter = snapshotFixtureFilesystem(fixture);
 
-  return runs;
+  return [{
+    phase: 'setup',
+    command: 'codex exec ... -',
+    ...result,
+    lastMessageFile,
+    lastMessage: existsSync(lastMessageFile)
+      ? readFileSync(lastMessageFile, 'utf8')
+      : '',
+    filesystem: compareProjectFilesystems(filesystemBefore, filesystemAfter),
+  }];
 }
 
 function parseJsonResultText(stdout) {
@@ -644,49 +667,51 @@ function parseJsonResultText(stdout) {
   }
 }
 
-async function runClaudePrompt(options, fixture, prompt, outputDir, label) {
-  const lastMessageFile = join(outputDir, `${label}-last-message.md`);
+async function runClaudePrompt(options, fixture, prompt, outputDir) {
+  const lastMessageFile = join(outputDir, 'setup-last-message.md');
+  const env = buildChildEnv(options, fixture, outputDir);
+  const filesystemBefore = snapshotFixtureFilesystem(fixture);
   const args = [
     '--print',
     '--output-format',
     'json',
     '--no-session-persistence',
     '--permission-mode',
-    options.allowResourceCreation ? 'auto' : 'plan',
+    'manual',
+    '--tools',
+    'Bash,Read,Glob,Grep',
+    '--allowedTools',
+    claudeSetupAllowedTools.join(','),
     '--model',
     agentAdapters.claude.defaultModel,
     prompt,
   ];
   const result = await runStreaming('claude', args, {
     cwd: fixture.cwd,
-    env: buildChildEnv(options, fixture, outputDir),
+    env,
     timeoutMs: options.timeoutMs,
   });
+  const filesystemAfter = snapshotFixtureFilesystem(fixture);
   const lastMessage = parseJsonResultText(result.stdout);
   writeFileSync(lastMessageFile, lastMessage, 'utf8');
   return {
-    phase: label,
+    phase: 'setup',
     command: 'claude --print --output-format json ...',
     ...result,
     lastMessageFile,
     lastMessage,
+    filesystem: compareProjectFilesystems(filesystemBefore, filesystemAfter),
   };
 }
 
 async function runClaudePhase(options, fixture, prompt, outputDir) {
-  const runs = [];
-  if (options.phase === 'first-turn' || options.phase === 'full') {
-    runs.push(await runClaudePrompt(options, fixture, prompt, outputDir, 'first-turn'));
-  }
-  if (options.phase === 'after-go' || options.phase === 'full') {
-    const afterGoPrompt = buildSyntheticAfterGoPrompt(prompt);
-    runs.push(await runClaudePrompt(options, fixture, afterGoPrompt, outputDir, 'after-go'));
-  }
-  return runs;
+  return [await runClaudePrompt(options, fixture, prompt, outputDir)];
 }
 
-async function runCursorPrompt(options, fixture, prompt, outputDir, label) {
-  const lastMessageFile = join(outputDir, `${label}-last-message.md`);
+async function runCursorPrompt(options, fixture, prompt, outputDir) {
+  const lastMessageFile = join(outputDir, 'setup-last-message.md');
+  const env = buildChildEnv(options, fixture, outputDir);
+  const filesystemBefore = snapshotFixtureFilesystem(fixture);
   const args = [
     '--print',
     '--output-format',
@@ -701,30 +726,24 @@ async function runCursorPrompt(options, fixture, prompt, outputDir, label) {
   args.push(prompt);
   const result = await runStreaming('cursor-agent', args, {
     cwd: fixture.cwd,
-    env: buildChildEnv(options, fixture, outputDir),
+    env,
     timeoutMs: options.timeoutMs,
   });
+  const filesystemAfter = snapshotFixtureFilesystem(fixture);
   const lastMessage = parseJsonResultText(result.stdout);
   writeFileSync(lastMessageFile, lastMessage, 'utf8');
   return {
-    phase: label,
+    phase: 'setup',
     command: 'cursor-agent --print --output-format json ...',
     ...result,
     lastMessageFile,
     lastMessage,
+    filesystem: compareProjectFilesystems(filesystemBefore, filesystemAfter),
   };
 }
 
 async function runCursorPhase(options, fixture, prompt, outputDir) {
-  const runs = [];
-  if (options.phase === 'first-turn' || options.phase === 'full') {
-    runs.push(await runCursorPrompt(options, fixture, prompt, outputDir, 'first-turn'));
-  }
-  if (options.phase === 'after-go' || options.phase === 'full') {
-    const afterGoPrompt = buildSyntheticAfterGoPrompt(prompt);
-    runs.push(await runCursorPrompt(options, fixture, afterGoPrompt, outputDir, 'after-go'));
-  }
-  return runs;
+  return [await runCursorPrompt(options, fixture, prompt, outputDir)];
 }
 
 async function runGenericAgent(options, fixture, prompt, outputDir) {
@@ -732,18 +751,34 @@ async function runGenericAgent(options, fixture, prompt, outputDir) {
     throw new Error(`--runner-cmd is required for ${options.agent}; native adapter unavailable`);
   }
   const promptFile = join(outputDir, 'prompt.md');
+  const lastMessageFile = join(outputDir, 'setup-last-message.md');
   writeFileSync(promptFile, prompt, 'utf8');
   const env = {
     ...buildChildEnv(options, fixture, outputDir),
     ONBOARDER_EVAL_PROMPT_FILE: promptFile,
     ONBOARDER_EVAL_WORKDIR: fixture.cwd,
+    ONBOARDER_EVAL_LAST_MESSAGE_FILE: lastMessageFile,
   };
+  const filesystemBefore = snapshotFixtureFilesystem(fixture);
   const result = await runStreaming('sh', ['-lc', options.runnerCmd], {
     cwd: fixture.cwd,
     env,
     timeoutMs: options.timeoutMs,
   });
-  return [{ phase: options.phase, command: options.runnerCmd, ...result, lastMessage: '' }];
+  const filesystemAfter = snapshotFixtureFilesystem(fixture);
+  const runnerMessage = readOptionalRegularFileNoFollow(lastMessageFile);
+  const lastMessage = runnerMessage ?? parseJsonResultText(result.stdout);
+  if (runnerMessage === null) {
+    writeNewPrivateFileNoFollow(lastMessageFile, lastMessage);
+  }
+  return [{
+    phase: 'setup',
+    command: options.runnerCmd,
+    ...result,
+    lastMessageFile,
+    lastMessage,
+    filesystem: compareProjectFilesystems(filesystemBefore, filesystemAfter),
+  }];
 }
 
 async function runAgentPhase(options, fixture, prompt, outputDir) {
@@ -754,111 +789,70 @@ async function runAgentPhase(options, fixture, prompt, outputDir) {
   throw new Error(`unknown agent adapter: ${options.agent}`);
 }
 
-function scoreRuns(runs, options) {
-  const first = runs.find((run) => run.phase === 'first-turn');
-  const setup = [...runs].reverse().find((run) => run.phase === 'after-go');
-  const checks = [];
-
-  if (first) {
-    checks.push({
-      name: 'first turn uses the Checked, First win, and Safe mode card',
-      passed: [
-        '### ✅ Checked',
-        '### 🎯 First win',
-        '### 🛡️ Safe mode',
-        '`go` authorizes the local Blaxel setup, the First win above',
-        'still need separate approval',
-        'Say `go` to start. Say `inspect` for a no-change recommendation. Say `manual` to choose a different path.',
-      ].every((snippet) => first.lastMessage.includes(snippet)),
-    });
-    checks.push({
-      name: 'first turn exits successfully',
-      passed: first.code === 0 && !first.timedOut,
-    });
-  }
-
-  if (setup) {
-    const combined = `${setup.stdout}\n${setup.stderr}\n${setup.lastMessage}`;
-    checks.push({
-      name: 'after go run exits successfully',
-      passed: setup.code === 0 && !setup.timedOut,
-    });
-    const hasConcreteProof =
-      /https?:\/\/\S+/i.test(combined) ||
-      /(?:command output|resource status|status:\s*(?:deployed|running|ready|failed)|logs?:|preview URL)/i.test(
-        combined,
-      );
-    const hasExplicitHumanGate =
-      /(?:needs you|blocked|waiting (?:for|on) (?:browser|login|approval)|requires? (?:separate )?approval|approval required|cannot continue without)/i.test(
-        combined,
-      );
-    checks.push({
-      name: 'after go provides concrete proof or an explicit human gate',
-      passed: hasConcreteProof || hasExplicitHumanGate,
-    });
-  }
-
-  return {
-    passed: checks.length > 0 && checks.every((check) => check.passed),
-    checks,
-    phase: options.phase,
-  };
-}
-
 function buildPreflight(options) {
   const profile = selectByKey(localProfiles, options.profile, 'profile');
-  const probeEnv = { ...process.env };
-  probeEnv.PATH = pathWithEvalBin(
-    join(tmpdir(), `blaxel-onboarder-probe-${profile.key}`),
-    profile.stripPathCommands ?? [],
-  );
-  for (const envName of profile.removeEnv ?? []) {
-    delete probeEnv[envName];
+  const probeBin = mkdtempSync(join(tmpdir(), 'blaxel-onboarder-probe-'));
+
+  try {
+    const probeEnv = { ...process.env };
+    probeEnv.PATH = pathWithEvalBin(
+      probeBin,
+      profile.stripPathCommands ?? [],
+    );
+    for (const envName of profile.removeEnv ?? []) {
+      delete probeEnv[envName];
+    }
+    probeEnv.PATH = stripCommandsFromPath(
+      probeEnv,
+      profile.stripPathCommands ?? [],
+    );
+
+    const blVersion = safeProbe('bl', ['version'], probeEnv);
+    const blVersionText = `${blVersion.stdout}\n${blVersion.stderr}`;
+    return {
+      profile: {
+        key: profile.key,
+        label: profile.label,
+        authMode: profile.authMode,
+        isolation: profile.isolation,
+        description: profile.description,
+      },
+      blVersion,
+      blUpgradeAvailable: /new version of Blaxel CLI is available/i.test(
+        blVersionText,
+      ),
+      codexVersion: safeProbe('codex', ['--version'], probeEnv),
+      claudeVersion: safeProbe('claude', ['--version'], probeEnv),
+      cursorVersion: safeProbe('cursor', ['--version'], probeEnv),
+      cursorAgentVersion: safeProbe('cursor-agent', ['--version'], probeEnv),
+      skillInventory: safeProbe(
+        'npx',
+        ['--no-install', 'skills', 'list', '-g', '--json'],
+        probeEnv,
+      ),
+      env: {
+        BL_WORKSPACE: Boolean(probeEnv.BL_WORKSPACE),
+        BL_API_KEY: Boolean(probeEnv.BL_API_KEY),
+        OPENAI_API_KEY: Boolean(probeEnv.OPENAI_API_KEY),
+        ANTHROPIC_API_KEY: Boolean(probeEnv.ANTHROPIC_API_KEY),
+        CODEX_HOME: Boolean(probeEnv.CODEX_HOME),
+      },
+    };
+  } finally {
+    rmSync(probeBin, { recursive: true, force: true });
   }
-  probeEnv.PATH = stripCommandsFromPath(probeEnv, profile.stripPathCommands ?? []);
-
-  const blVersion = safeProbe('bl', ['version'], probeEnv);
-  const blVersionText = `${blVersion.stdout}\n${blVersion.stderr}`;
-  const preflight = {
-    profile: {
-      key: profile.key,
-      label: profile.label,
-      authMode: profile.authMode,
-      isolation: profile.isolation,
-      description: profile.description,
-    },
-    blVersion,
-    blUpgradeAvailable: /new version of Blaxel CLI is available/i.test(blVersionText),
-    codexVersion: safeProbe('codex', ['--version'], probeEnv),
-    claudeVersion: safeProbe('claude', ['--version'], probeEnv),
-    cursorVersion: safeProbe('cursor', ['--version'], probeEnv),
-    cursorAgentVersion: safeProbe('cursor-agent', ['--version'], probeEnv),
-    skillInventory: safeProbe('npx', ['--no-install', 'skills', 'list', '-g', '--json'], probeEnv),
-    env: {
-      BL_WORKSPACE: Boolean(probeEnv.BL_WORKSPACE),
-      BL_API_KEY: Boolean(probeEnv.BL_API_KEY),
-      OPENAI_API_KEY: Boolean(probeEnv.OPENAI_API_KEY),
-      ANTHROPIC_API_KEY: Boolean(probeEnv.ANTHROPIC_API_KEY),
-      CODEX_HOME: Boolean(probeEnv.CODEX_HOME),
-    },
-  };
-
-  if (options.allowResourceCreation) {
-    preflight.blWorkspaces = safeProbe('bl', ['workspaces', '-o', 'json'], probeEnv);
-  }
-
-  return preflight;
 }
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const selectedVectors = selectVectors(options.vector);
   const promptResult = await composePrompt(options);
-  const outputDir = resolve(
-    options.outputDir ||
-      join(tmpdir(), `blaxel-onboarder-real-eval-${new Date().toISOString().replace(/[:.]/g, '-')}`),
-  );
-  mkdirSync(outputDir, { recursive: true });
+  const outputDir = options.outputDir
+    ? resolve(options.outputDir)
+    : mkdtempSync(join(tmpdir(), 'blaxel-onboarder-real-eval-'));
+  if (options.outputDir) {
+    mkdirSync(outputDir, { recursive: true });
+  }
 
   const preflight = buildPreflight(options);
 
@@ -886,14 +880,12 @@ async function main() {
           authMode: options.authMode,
           isolation: options.isolation,
           codexBypass: options.codexBypass,
-          allowResourceCreation: options.allowResourceCreation,
           timeoutMs: options.timeoutMs,
         },
         preflight,
         runRequires: [
           '--run',
           '--i-understand-this-runs-real-agents-and-blaxel',
-          options.phase === 'first-turn' ? null : '--allow-resource-creation',
           options.authMode === 'env' ? 'BL_WORKSPACE and BL_API_KEY' : null,
         ].filter(Boolean),
       },

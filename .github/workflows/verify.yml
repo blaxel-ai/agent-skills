@@ -16,5 +16,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Test onboarder evaluator
+        run: node --test scripts/onboarder-harness/*.test.mjs
+
       - name: Verify onboarder prompt package
         run: node scripts/verify-onboarder-prompt.mjs

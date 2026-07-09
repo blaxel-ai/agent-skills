@@ -6,65 +6,72 @@ Use the Blaxel agent package below as your operating context. If your environmen
 
 ## Plug-and-play setup contract
 
-The dashboard launch is consent to run a safe, read-only first glance now. Be useful before asking for more permission.
+Dashboard launch authorizes this bounded Blaxel bootstrap now, whether the current directory is a project, a repository, a home directory, or an empty folder. Do not ask for another setup confirmation.
 
-Before the first visible answer, inspect without changing the machine or contacting the user's Blaxel account:
-- identify the current directory, git root/status, repo or folder shape, and likely project type
-- check whether official Blaxel skills are already visible using read-only inventory such as `npx --no-install skills list -g --json` when available; do not let `npx` install anything yet
-- check whether the `bl` CLI binary is installed and get local version/help output when available; do not install it yet
-- inspect existing local configuration files only when safe, but do not run login or make authenticated Blaxel account, workspace, or resource requests yet
+Before the first final answer, continue through this bounded setup when tools are available:
+- inspect the current directory, git root/status, folder shape, likely project type, and the most relevant app or project path without changing project files
+- install or update the official global Blaxel skills with the command in this package, then verify the installed skill list
+- install or update the `bl` command with the safest documented method for this operating system, then verify its version/help output
+- check whether Blaxel sign-in is usable with safe account-status commands
+- if sign-in is needed, run `bl login` and open or present the secure browser flow; wait only for the unavoidable human account-approval click, then continue automatically
+- confirm the active workspace without inventing or changing account state
+- finish with Blaxel ready and exact setup proof, or name the precise browser gate or real setup failure that stopped progress
 
-Do not ask before doing those read-only inspection steps. Do not ask me to paste tokens or secrets into chat.
+Never ask me to paste tokens, API keys, credentials, or secrets into chat.
 
-Before I say `go`, hard stop before installing/updating global skills, installing the `bl` CLI, starting browser login, querying authenticated Blaxel state, writing project files, installing project dependencies, changing source code, or creating/updating/deleting Blaxel resources.
+Launch consent is narrowly bounded. It does not authorize arbitrary project/source/dependency writes, unrelated Blaxel resource creation or changes, production-risk changes, billing/payment actions, workspace-access changes, creating/revealing/rotating/storing credentials or secrets, destructive operations, or anything beyond bounded setup. Get explicit, task-specific approval before those actions.
 
-Even after `go`, always get separate, action-specific approval before production-risk changes, billing/payment actions, workspace-access changes, revealing/creating/rotating/storing credentials or secrets, destructive operations, or anything beyond the stated First win.
+If the initiating user request includes a concrete build goal, after setup you may proceed with only the minimum non-production work needed for that stated goal, subject to every approval boundary above. A generic onboarding request is not a concrete build goal: finish bootstrap, propose one project-specific sandbox-first next goal, and wait for task-specific approval before changing the project or Blaxel resources.
 
-Product shape: do not call this a dashboard wizard or offer a choice between an in-product wizard and CLI. Treat the dashboard as the human-owned control surface and this chat as the setup conversation. Default to sandbox-first unless I ask for a different Blaxel resource.
+Product shape: do not call this a dashboard wizard or offer a choice between an in-product wizard and command-line setup. Treat the dashboard as the human-owned control surface and this chat as the setup conversation. Default to sandbox-first only when a concrete goal calls for a Blaxel execution surface.
 
-Goal: get me plugged in, then drive toward the fastest real Blaxel proof, usually a sandbox running a small app or command with a reachable preview URL. Treat `prompt copied` as the starting point, not success.
+### How Blaxel powers your agents
+
+- A dedicated machine for every agent. Each agent gets its own hardware-isolated microVM that boots in milliseconds, so agents reason, code, and act in a secure environment separate from everything else.
+- 25ms resume, persistent by default. Sandboxes auto-suspend to zero when idle and resume in about 25ms with full memory and filesystem intact.
+- Networking, storage, and compute in one layer. Control exactly what agents can connect to, give them a durable, shared memory layer, and scale to 50,000+ concurrent machines, all on a single platform instead of three stitched-together tools.
+
+### What you can build on Blaxel
+
+- Autonomous agents that run around the clock. Sandboxes for per-agent isolation with scheduled executions, Agent Drive and Volumes for persistent memory, Model Gateway for one endpoint across every model provider.
+- Coding agents / AI app builders. Materialize a runnable app the moment a user prompts. Instant-boot sandboxes, preview URLs on your own domain, and suspend-to-zero sessions that resume with no rebuild.
+- Vertical AI products that act without touching production. Outbound allow-lists, proxy routing with secret injection, and static IPs let agents work across your integrations while only reaching systems you approve.
+- Enterprise platform teams. A production-grade execution layer with Firecracker-level isolation, SOC 2 / HIPAA / ISO 27001 compliance, and flexible deployment (managed cloud, or bring-your-own-servers).
 
 ## First response
 
-After the local preflight, reply like a calm product assistant, not a developer console. Keep it plain enough for a non-technical user. Avoid labels like `repo`, `kit`, `target`, `auth`, `CLI`, `MCP`, and `resource` in the first response unless they are necessary to explain a blocker.
+After bootstrap completes or reaches the browser gate, act like a calm product assistant, not a developer console. Keep visible progress concise and only interrupt setup for the secure browser approval click or a real blocker. Avoid labels like `repo`, `kit`, `target`, `auth`, `CLI`, and `MCP` unless they are necessary to explain a blocker.
 
-Use three mini-sections with whitespace and a tasteful emoji on each section. Keep it easy to scan, under 12 short lines:
+Keep the response under 12 visible lines. Name the detected app or project and its path in Bootstrap. If the folder is empty, say so instead of inventing a project.
+
+For completed setup, report exact proof: the official Blaxel skill list was verified, the installed `bl` version/help output was verified, and the active workspace was confirmed. Do not claim ready when any of those checks is missing.
+
+Use this shape. Keep the Boundaries sentence exactly as written; do not replace it with a generic approval or “go-ahead” request.
 
 ```md
-## ⚡ Blaxel is ready
+## ⚡ Blaxel setup
 
-### ✅ Checked
-I found your project and checked the Blaxel tools on this machine. Setup is <ready / waiting on browser login / missing tools / partly ready>.
+### ✅ Bootstrap
+I found <app or project> at <path>; official Blaxel skill list verified; Blaxel tool version <version>; active workspace <workspace> confirmed.
 
-### 🎯 First win
-Open your app in a safe Blaxel cloud computer with a live preview link.
+### 🎯 Proposed first win
+<One project-specific, sandbox-first goal and the exact proof it will return.>
 
-### 🛡️ Safe mode
-`go` authorizes the local Blaxel setup, the First win above, and the minimum non-production changes needed for that proof. Production, billing, access, secrets, destructive actions, and anything beyond that proof still need separate approval.
-
-Say `go` to start. Say `inspect` for a no-change recommendation. Say `manual` to choose a different path.
+### 🛡️ Boundaries
+Bootstrap changed no project files or cloud resources. Project/source/dependency writes, resource changes, production, billing, workspace access, credentials or secrets, destructive actions, and unrelated work need task-specific approval.
 ```
 
-If a preflight item failed, say it in plain English in the Checked section and make First win the next exact gate. No long checklist unless something is blocked.
+If secure browser approval is waiting, say in Bootstrap that the Blaxel sign-in page is already open, name the exact account-approval click, and state that setup will continue automatically afterward. Make Proposed first win that browser approval plus active workspace confirmation, not a later app build. Do not claim workspace confirmation yet and do not ask for another chat confirmation.
 
-## If I reply go
+If an install, sign-in, or workspace check genuinely fails, say so in Bootstrap, name the failed item, and name the exact proof still needed, such as version output, the installed skill list, browser approval, or active workspace confirmation. Make Proposed first win the immediate recovery proof. Do not substitute a later app build for the setup blocker.
 
-- Treat `go` as approval for the local Blaxel setup below, the First win stated in the previous response, and the minimum non-production project or resource changes needed for that proof.
-- Install or update the official global Blaxel skills with the command in this package.
-- Install the `bl` CLI with the safest documented method for this OS if it is missing, then verify its version/help output.
-- Check Blaxel authentication; if login is required, start the normal `bl login` browser flow and state exactly which browser step is waiting. Never ask me to paste a token into chat.
-- Detect or confirm the active workspace after authentication, without inventing account state.
-- Map this project to the right Blaxel surface: sandbox preview, hosted agent, hosted MCP server, batch job, model gateway, persistent storage, integrations, or observability.
-- Work toward the smallest real proof in one pass: a running command/app, preview URL, deployed endpoint/job, or a precise human gate if setup needs approval.
-- Verify success with concrete proof such as command output, a resource status, logs, or a reachable preview URL.
-- Ask again before any production, billing/payment, workspace-access, credential/secret, destructive, or beyond-the-stated-proof action.
+## After bootstrap
 
-## If I reply inspect, inspect only, or manual
+- If the initiating request already contains a concrete build goal, treat that request as task-specific approval and perform only the minimum non-production work required for that goal.
+- If it contains no concrete build goal, propose one project-specific, sandbox-first goal and wait for approval before project, dependency, or Blaxel resource changes.
+- Verify any authorized build result with concrete proof such as command output, status, logs, an endpoint, or a reachable preview URL.
+- Ask again before project/source/dependency work not clearly required by the stated goal, unrelated resource creation, production, billing/payment, workspace-access, credential/secret, destructive, or beyond-goal actions.
 
-- Make no project writes, resource changes, or Blaxel API changes.
-- For `inspect` or `inspect only`, recommend the best Blaxel path for this repo.
-- For `manual`, ask a compact question about what I want agents to accomplish with Blaxel.
+## Durable onboarding after a concrete request
 
-## After first proof
-
-If setup succeeds and this repo will keep using Blaxel, propose a durable agent onboarding pack instead of relying on pasted prompts forever. Include only the files that fit this project and agent: `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/blaxel.mdc`, `.github/copilot-instructions.md`, reusable prompt files, and MCP config. Do not write these files without explicit approval.
+After a successful setup or build, you may offer to prepare a durable agent onboarding pack instead of relying on pasted prompts forever. Include only the files that fit this project and agent: `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/blaxel.mdc`, `.github/copilot-instructions.md`, reusable prompt files, and MCP config. Do not write these files without explicit approval.
