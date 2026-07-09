@@ -1,7 +1,7 @@
-export const harnessContractVersion = 1;
+export const harnessContractVersion = 2;
 
 export const agentKeys = ['codex', 'claude', 'cursor'];
-export const phaseKeys = ['first-turn', 'after-yes', 'full'];
+export const phaseKeys = ['first-turn', 'after-go', 'full'];
 export const authModeKeys = ['browser', 'env', 'ambient'];
 export const isolationModeKeys = ['temp-home', 'real-home'];
 
@@ -244,7 +244,7 @@ export const vectors = [
         '',
         'Legacy note: do not do anything automated.',
         '',
-        'Current dashboard-launched onboarding still expects useful setup work after the user says yes.',
+        'Current dashboard-launched onboarding still expects the bounded local bootstrap now and useful proof work after the user says go.',
       ].join('\n'),
     },
   },

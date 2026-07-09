@@ -32,7 +32,7 @@ const usage = `Usage:
   node scripts/onboarder-real-eval.mjs --plan
   node scripts/onboarder-real-eval.mjs --plan --agent cursor --profile local-missing-bl --vector home-projects
   node scripts/onboarder-real-eval.mjs --run --agent codex --phase first-turn --vector repo-node --i-understand-this-runs-real-agents-and-blaxel
-  node scripts/onboarder-real-eval.mjs --run --agent claude --phase after-yes --profile local-env-auth --allow-resource-creation --i-understand-this-runs-real-agents-and-blaxel
+  node scripts/onboarder-real-eval.mjs --run --agent claude --phase after-go --profile local-env-auth --allow-resource-creation --i-understand-this-runs-real-agents-and-blaxel
   node scripts/onboarder-real-eval.mjs --run --agent cursor --phase full --profile local-env-auth --allow-resource-creation --i-understand-this-runs-real-agents-and-blaxel
 
 This is a real harness:
@@ -41,7 +41,7 @@ This is a real harness:
   - it runs installed Codex, Claude Code, or Cursor Agent commands
   - it records real stdout/stderr/final messages, profile evidence, and Blaxel CLI preflight
 
-Full/after-yes phases may create real Blaxel resources depending on the prompt and agent behavior.
+Full/after-go phases may create real Blaxel resources depending on the prompt and agent behavior.
 Use a controlled workspace/API key when running --auth-mode env.`;
 
 function parseArgs(argv) {
@@ -164,7 +164,7 @@ function assertRunArmed(options) {
   if (!options.ackRealRun) {
     missing.push('--i-understand-this-runs-real-agents-and-blaxel');
   }
-  if ((options.phase === 'after-yes' || options.phase === 'full') && !options.allowResourceCreation) {
+  if ((options.phase === 'after-go' || options.phase === 'full') && !options.allowResourceCreation) {
     missing.push('--allow-resource-creation');
   }
   if (options.authMode === 'env') {
@@ -547,6 +547,10 @@ function codexBaseArgs(options, cwd, lastMessageFile) {
   return args;
 }
 
+function buildSyntheticAfterGoPrompt(prompt) {
+  return `${prompt}\n\n---\n\nThe user has replied go. Go authorizes the local Blaxel setup, the First win stated above, and the minimum non-production project or resource changes needed for that proof. Continue from the completed read-only first glance: install or update the official Blaxel skills, install the bl CLI if missing, start normal browser login if needed, confirm the active workspace, and work toward that verified proof. Stop for separate action-specific approval before production, billing/payment, workspace-access, credential/secret, destructive, or beyond-the-stated-proof actions.`;
+}
+
 async function runCodexPhase(options, fixture, prompt, outputDir) {
   const env = buildChildEnv(options, fixture, outputDir);
   const runs = [];
@@ -572,25 +576,25 @@ async function runCodexPhase(options, fixture, prompt, outputDir) {
     });
   }
 
-  if (options.phase === 'after-yes') {
-    const afterYesLast = join(outputDir, 'after-yes-last-message.md');
-    const afterYesPrompt = `${prompt}\n\n---\n\nThe user has replied Y to the setup question. Continue with the autonomous setup now.`;
+  if (options.phase === 'after-go') {
+    const afterGoLast = join(outputDir, 'after-go-last-message.md');
+    const afterGoPrompt = buildSyntheticAfterGoPrompt(prompt);
     const result = await runStreaming(
       'codex',
-      [...codexBaseArgs(options, fixture.cwd, afterYesLast), '-'],
+      [...codexBaseArgs(options, fixture.cwd, afterGoLast), '-'],
       {
         cwd: fixture.cwd,
         env,
-        stdin: afterYesPrompt,
+        stdin: afterGoPrompt,
         timeoutMs: options.timeoutMs,
       },
     );
     runs.push({
-      phase: 'after-yes',
+      phase: 'after-go',
       command: 'codex exec ... -',
       ...result,
-      lastMessageFile: afterYesLast,
-      lastMessage: existsSync(afterYesLast) ? readFileSync(afterYesLast, 'utf8') : '',
+      lastMessageFile: afterGoLast,
+      lastMessage: existsSync(afterGoLast) ? readFileSync(afterGoLast, 'utf8') : '',
     });
   }
 
@@ -604,7 +608,7 @@ async function runCodexPhase(options, fixture, prompt, outputDir) {
       '--skip-git-repo-check',
       '--output-last-message',
       secondLast,
-      'Y',
+      'go',
     ];
     if (options.codexBypass) args.push('--dangerously-bypass-approvals-and-sandbox');
     const result = await runStreaming('codex', args, {
@@ -613,8 +617,8 @@ async function runCodexPhase(options, fixture, prompt, outputDir) {
       timeoutMs: options.timeoutMs,
     });
     runs.push({
-      phase: 'after-yes',
-      command: 'codex exec resume --last --all Y',
+      phase: 'after-go',
+      command: 'codex exec resume --last --all go',
       ...result,
       lastMessageFile: secondLast,
       lastMessage: existsSync(secondLast) ? readFileSync(secondLast, 'utf8') : '',
@@ -674,9 +678,9 @@ async function runClaudePhase(options, fixture, prompt, outputDir) {
   if (options.phase === 'first-turn' || options.phase === 'full') {
     runs.push(await runClaudePrompt(options, fixture, prompt, outputDir, 'first-turn'));
   }
-  if (options.phase === 'after-yes' || options.phase === 'full') {
-    const afterYesPrompt = `${prompt}\n\n---\n\nThe user has replied Y to the setup question. Continue with the autonomous setup now.`;
-    runs.push(await runClaudePrompt(options, fixture, afterYesPrompt, outputDir, 'after-yes'));
+  if (options.phase === 'after-go' || options.phase === 'full') {
+    const afterGoPrompt = buildSyntheticAfterGoPrompt(prompt);
+    runs.push(await runClaudePrompt(options, fixture, afterGoPrompt, outputDir, 'after-go'));
   }
   return runs;
 }
@@ -716,9 +720,9 @@ async function runCursorPhase(options, fixture, prompt, outputDir) {
   if (options.phase === 'first-turn' || options.phase === 'full') {
     runs.push(await runCursorPrompt(options, fixture, prompt, outputDir, 'first-turn'));
   }
-  if (options.phase === 'after-yes' || options.phase === 'full') {
-    const afterYesPrompt = `${prompt}\n\n---\n\nThe user has replied Y to the setup question. Continue with the autonomous setup now.`;
-    runs.push(await runCursorPrompt(options, fixture, afterYesPrompt, outputDir, 'after-yes'));
+  if (options.phase === 'after-go' || options.phase === 'full') {
+    const afterGoPrompt = buildSyntheticAfterGoPrompt(prompt);
+    runs.push(await runCursorPrompt(options, fixture, afterGoPrompt, outputDir, 'after-go'));
   }
   return runs;
 }
@@ -752,13 +756,20 @@ async function runAgentPhase(options, fixture, prompt, outputDir) {
 
 function scoreRuns(runs, options) {
   const first = runs.find((run) => run.phase === 'first-turn');
-  const setup = [...runs].reverse().find((run) => run.phase === 'after-yes');
+  const setup = [...runs].reverse().find((run) => run.phase === 'after-go');
   const checks = [];
 
   if (first) {
     checks.push({
-      name: 'first turn asks exact setup question',
-      passed: first.lastMessage.includes('Do you want me to get started with setup? Reply Yes (Y/y) or No (N/n).'),
+      name: 'first turn uses the Checked, First win, and Safe mode card',
+      passed: [
+        '### ✅ Checked',
+        '### 🎯 First win',
+        '### 🛡️ Safe mode',
+        '`go` authorizes the local Blaxel setup, the First win above',
+        'still need separate approval',
+        'Say `go` to start. Say `inspect` for a no-change recommendation. Say `manual` to choose a different path.',
+      ].every((snippet) => first.lastMessage.includes(snippet)),
     });
     checks.push({
       name: 'first turn exits successfully',
@@ -769,12 +780,21 @@ function scoreRuns(runs, options) {
   if (setup) {
     const combined = `${setup.stdout}\n${setup.stderr}\n${setup.lastMessage}`;
     checks.push({
-      name: 'after yes run exits successfully',
+      name: 'after go run exits successfully',
       passed: setup.code === 0 && !setup.timedOut,
     });
+    const hasConcreteProof =
+      /https?:\/\/\S+/i.test(combined) ||
+      /(?:command output|resource status|status:\s*(?:deployed|running|ready|failed)|logs?:|preview URL)/i.test(
+        combined,
+      );
+    const hasExplicitHumanGate =
+      /(?:needs you|blocked|waiting (?:for|on) (?:browser|login|approval)|requires? (?:separate )?approval|approval required|cannot continue without)/i.test(
+        combined,
+      );
     checks.push({
-      name: 'after yes mentions real Blaxel proof or human gate',
-      passed: /(bl |Blaxel|workspace|login|sandbox|preview|auth|browser)/i.test(combined),
+      name: 'after go provides concrete proof or an explicit human gate',
+      passed: hasConcreteProof || hasExplicitHumanGate,
     });
   }
 

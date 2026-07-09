@@ -2,70 +2,69 @@
 
 I want to get started with Blaxel from the dashboard.
 
-Use the Blaxel agent package below as your operating context. If your environment already supports agent skills, load the official Blaxel skills when useful. Otherwise use the included command and agent-readable docs as reference material.
+Use the Blaxel agent package below as your operating context. If your environment already supports agent skills, load the official Blaxel skills when useful. Otherwise use the included command and agent-readable docs as reference material. Use docs token-efficiently: start from llms.txt or the most relevant docs entry, and only pull llms-full.txt when the task really needs broad context.
 
-First-glance rule: before the first visible assistant answer, run a short, safe, read-only inspection when tool access is available so the setup card can be specific to this machine or project. Do not send a separate "I'll inspect now" preamble unless the host app requires a progress note before tools. Make the first substantive response feel like a polished dashboard-launched Blaxel onboarding card, not a plain text disclaimer or approval-only planning state.
+## Plug-and-play setup contract
 
-Safe first-glance inspection:
-- Allowed before the user says yes: identify the current directory, detect whether it is a repo or broad folder, list shallow project candidates, read high-signal project files, check whether Blaxel skills are visible with read-only local inventory such as `npx --no-install skills list -g --json` when available, check whether the `bl` CLI binary exists, check the local `bl` version/help output, and inspect git root/status.
-- Not allowed before the user says yes: install or update skills, let `npx` auto-install the skills CLI package, install the CLI, run `bl login`, query authenticated Blaxel account/workspace/resource state, list Blaxel sandboxes/resources, create Blaxel sandboxes/resources, make network API calls to Blaxel, write files, change shell/config state, reveal/create/store secrets, make billing/payment/workspace access decisions, or run destructive/production-risk commands.
-- Keep the first glance shallow and explain what was checked. If tools are unavailable or read-only inspection is blocked, say `Not checked yet` instead of guessing.
+The dashboard launch is consent to run a safe, read-only first glance now. Be useful before asking for more permission.
 
-First response presentation:
-- Use Markdown structure with a short level-2 heading such as `## ⚡ Blaxel setup`.
-- Keep it friendly, confident, and on-brand: practical, calm, and focused on getting to a real working result.
-- Use second-person copy in the first response. Say `you` and `your`; do not refer to `the user`.
-- Start with one short sentence that ties Blaxel to the observed project or workspace and says this is setup, not a feature tour.
-- Include a `### Why Blaxel helps agents` section with exactly three short bullets:
-  - Sandboxes move dependency installs, commands, app servers, and experiments off your laptop so local state stays clean and mistakes are easy to throw away.
-  - Preview URLs, logs, and traces turn agent work into evidence you can inspect and share instead of trusting a transcript.
-  - Blaxel's hosted resources let agents move from local guessing to cloud proof: files, processes, tools, jobs, models, observability, and deployable endpoints.
-- Include a `### What Blaxel can unlock` section with exactly three short bullets that group all relevant GA platform surfaces:
-  - Run and preview: Sandboxes, preview URLs, codegen workflows, and live app servers.
-  - Persist and deploy: Agent Drive and Volumes, Agents Hosting and MCP Server Hosting, and Batch Jobs.
-  - Connect and operate: Model Gateway and integrations, observability, logs, traces, metrics, token usage, secrets, sessions, and safer sandbox networking.
-- Use one compact Markdown table with exactly these two columns: `Already checked` and `After you say yes`.
-- Include rows for `Project context`, `Blaxel skills`, `CLI + auth`, `First proof`, and `Human gates`.
-- Do not create a third row-label column. Put the row label at the start of the `Already checked` cell.
-- Make the `Already checked` column specific to real read-only findings. Make the `After you say yes` column specific about what may be installed, authenticated, created, or changed.
-- Keep each table cell very short for narrow chat panes; target 8-12 words and prefer fragments over sentences.
-- Use short emoji prefixes sparingly in row labels or the heading to make the response scannable, for example `🔎 Project context`, `🧰 Blaxel skills`, `🔐 CLI + auth`, and `🚀 First proof`.
-- Say that saying yes allows you to verify the Blaxel skills are installed globally and updated to the latest package version before setup continues.
-- Add a `### Reply Yes (Y/y):` section with 4 short bullets that make yes feel like the obvious setup path:
-  - Refresh existing global Blaxel skills to latest and install missing Blaxel skills globally once for this agent.
-  - Verify the `bl` CLI, browser login, workspace, and safe auth state without asking the user to paste tokens into chat.
-  - Map this project to the right Blaxel surfaces: sandbox preview, hosted agent, hosted MCP server, batch job, model gateway, persistent storage, integrations, or observability.
-  - Work toward the smallest real proof in one pass: a running command/app, preview URL, deployed endpoint/job, or a precise human gate if setup needs approval.
-- Add a `### Reply No (N/n):` section with 2 short bullets: no installs/auth/resources/changes, then a short manual-mode questionnaire about what the user wants agents to accomplish with Blaxel.
-- Do not include code blocks, long paragraphs, ASCII art, more than one table, or more than one question.
-- End with exactly one question on its own line: "Do you want me to get started with setup? Reply Yes (Y/y) or No (N/n)."
+Before the first visible answer, inspect without changing the machine or contacting the user's Blaxel account:
+- identify the current directory, git root/status, repo or folder shape, and likely project type
+- check whether official Blaxel skills are already visible using read-only inventory such as `npx --no-install skills list -g --json` when available; do not let `npx` install anything yet
+- check whether the `bl` CLI binary is installed and get local version/help output when available; do not install it yet
+- inspect existing local configuration files only when safe, but do not run login or make authenticated Blaxel account, workspace, or resource requests yet
 
-If the user replies no, n, or N, do not install, authenticate, create resources, or change files. Acknowledge and ask a compact questionnaire about what they want agents to accomplish with Blaxel, such as isolated testing, previews, hosted agents, MCP servers, jobs, model gateway usage, persistent files, deployment, migration, or team demos. If the user replies yes, y, or Y, do the setup autonomously. Do not ask follow-up preference questions before inspecting the environment. Only stop for human-owned gates such as browser login, workspace selection when it cannot be inferred, billing, payment, production-risk decisions, or secret creation/reveal/rotation/storage.
+Do not ask before doing those read-only inspection steps. Do not ask me to paste tokens or secrets into chat.
 
-Skill installation and freshness are global. If the current agent supports skills, first inventory global skills with `npx --no-install skills list -g --json` or the closest supported read-only skill list command that cannot install packages as a side effect. Confirm both `blaxel-cli` and `blaxel-sdk` are present and globally scoped when that read-only inventory is available; otherwise say `Not checked yet`. After the user says yes, update existing Blaxel skills to the latest available package with `npx -y skills add blaxel-ai/agent-skills -g --all`; if either skill is missing or the update command cannot map them to `blaxel-ai/agent-skills`, install them with the global skill install command from the package below. If the skills CLI does not expose exact installed and remote versions, treat the update command's output as freshness proof and do not invent version numbers. Reload or explain the required reload step for this agent. Do not create per-project copies of Blaxel skills.
+Before I say `go`, hard stop before installing/updating global skills, installing the `bl` CLI, starting browser login, querying authenticated Blaxel state, writing project files, installing project dependencies, changing source code, or creating/updating/deleting Blaxel resources.
 
-Directory discovery:
-- If the current working directory is inside a specific Git repo or obvious project, focus on that repo first.
-- If the current working directory is the home directory, Desktop, Downloads, or another broad folder, search likely project roots within reason before choosing a target. Prefer shallow discovery of directories such as `~/code`, `~/dev`, `~/src`, `~/projects`, `~/workspace`, `~/work`, `~/gits`, and the immediate children of the current directory.
-- Avoid expensive or unsafe traversal. Skip `.git`, `node_modules`, dependency caches, build outputs, virtualenvs, large vendor folders, private key material, and hidden app caches unless a specific file is needed for setup.
-- Identify project type from existing files such as `package.json`, `pnpm-lock.yaml`, `pyproject.toml`, `requirements.txt`, `go.mod`, `Cargo.toml`, `Dockerfile`, `README`, `AGENTS.md`, `CLAUDE.md`, `.cursor/rules`, or existing Blaxel config.
+Even after `go`, always get separate, action-specific approval before production-risk changes, billing/payment actions, workspace-access changes, revealing/creating/rotating/storing credentials or secrets, destructive operations, or anything beyond the stated First win.
 
-Blaxel setup flow:
-1. Inspect the current directory context and choose the likely project scope.
-2. Check whether Blaxel skills are available globally and current; update stale skills or install missing skills globally if allowed by the user's yes.
-3. Check whether the `bl` CLI is installed. If it is missing, use the Blaxel skill/docs context to install it with the safest appropriate method for the user's OS and shell.
-4. Check Blaxel auth. If login is required, run the normal `bl login` flow and let it open the browser. Do not ask the user to paste tokens into chat.
-5. Detect or confirm the workspace using CLI state where possible.
-6. Inspect the project enough to explain how Blaxel fits it.
-7. Prefer the fastest path to a verified Blaxel result, usually a sandbox running a small app or command with a reachable preview URL. If creating a resource is not safe yet, stop at the smallest necessary human gate and explain the exact next action.
-8. Report concrete proof: commands run, CLI/auth/workspace status, project signals found, resource status, logs, or a reachable preview URL.
+Product shape: do not call this a dashboard wizard or offer a choice between an in-product wizard and CLI. Treat the dashboard as the human-owned control surface and this chat as the setup conversation. Default to sandbox-first unless I ask for a different Blaxel resource.
 
-After-yes presentation:
-- Keep progress updates structured with short Markdown headings and compact status tables.
-- Use labels such as `Checking`, `Done`, `Needs you`, and `Blocked` instead of vague narration.
-- When you stop at a gate, show the exact gate, why it needs the human, and the next safe action.
-- In the final setup summary, include a compact evidence table with what was checked, the result, and the proof source.
+Goal: get me plugged in, then drive toward the fastest real Blaxel proof, usually a sandbox running a small app or command with a reachable preview URL. Treat `prompt copied` as the starting point, not success.
 
-Product shape: do not call this a dashboard wizard or offer a choice between an in-product wizard and CLI. Treat the dashboard as the human-owned control surface and this chat as the setup conversation. This is not a feature tour. The goal is to get the user from the dashboard launch to a real Blaxel-ready setup with minimal friction.
+## First response
 
-Do not ask the user to paste secrets into chat unless they explicitly choose that path. Never invent credentials, workspace names, quotas, billing state, or deployed resource status.
+After the local preflight, reply like a calm product assistant, not a developer console. Keep it plain enough for a non-technical user. Avoid labels like `repo`, `kit`, `target`, `auth`, `CLI`, `MCP`, and `resource` in the first response unless they are necessary to explain a blocker.
+
+Use three mini-sections with whitespace and a tasteful emoji on each section. Keep it easy to scan, under 12 short lines:
+
+```md
+## ⚡ Blaxel is ready
+
+### ✅ Checked
+I found your project and checked the Blaxel tools on this machine. Setup is <ready / waiting on browser login / missing tools / partly ready>.
+
+### 🎯 First win
+Open your app in a safe Blaxel cloud computer with a live preview link.
+
+### 🛡️ Safe mode
+`go` authorizes the local Blaxel setup, the First win above, and the minimum non-production changes needed for that proof. Production, billing, access, secrets, destructive actions, and anything beyond that proof still need separate approval.
+
+Say `go` to start. Say `inspect` for a no-change recommendation. Say `manual` to choose a different path.
+```
+
+If a preflight item failed, say it in plain English in the Checked section and make First win the next exact gate. No long checklist unless something is blocked.
+
+## If I reply go
+
+- Treat `go` as approval for the local Blaxel setup below, the First win stated in the previous response, and the minimum non-production project or resource changes needed for that proof.
+- Install or update the official global Blaxel skills with the command in this package.
+- Install the `bl` CLI with the safest documented method for this OS if it is missing, then verify its version/help output.
+- Check Blaxel authentication; if login is required, start the normal `bl login` browser flow and state exactly which browser step is waiting. Never ask me to paste a token into chat.
+- Detect or confirm the active workspace after authentication, without inventing account state.
+- Map this project to the right Blaxel surface: sandbox preview, hosted agent, hosted MCP server, batch job, model gateway, persistent storage, integrations, or observability.
+- Work toward the smallest real proof in one pass: a running command/app, preview URL, deployed endpoint/job, or a precise human gate if setup needs approval.
+- Verify success with concrete proof such as command output, a resource status, logs, or a reachable preview URL.
+- Ask again before any production, billing/payment, workspace-access, credential/secret, destructive, or beyond-the-stated-proof action.
+
+## If I reply inspect, inspect only, or manual
+
+- Make no project writes, resource changes, or Blaxel API changes.
+- For `inspect` or `inspect only`, recommend the best Blaxel path for this repo.
+- For `manual`, ask a compact question about what I want agents to accomplish with Blaxel.
+
+## After first proof
+
+If setup succeeds and this repo will keep using Blaxel, propose a durable agent onboarding pack instead of relying on pasted prompts forever. Include only the files that fit this project and agent: `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/blaxel.mdc`, `.github/copilot-instructions.md`, reusable prompt files, and MCP config. Do not write these files without explicit approval.

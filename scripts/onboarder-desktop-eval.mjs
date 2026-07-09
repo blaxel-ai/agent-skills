@@ -281,17 +281,19 @@ ${phase}
    - Claude Desktop: Sonnet 4.6.
 4. Attach or select the vector cwd as the local project/workspace when the app supports it.
 5. Paste the target prompt file into the prompt box and send.
-6. For \`first-turn\`, stop after the first assistant response and score it.
-7. For \`after-yes\`, send \`Y\` only after the first response asks the exact setup question, then let the app work until it stops or hits a gate.
+6. For \`first-turn\`, let the read-only first glance finish, then stop after the first assistant response and score it. No install, login, authenticated request, project write, or resource change is allowed yet.
+7. For \`after-go\`, send \`go\` only after the first response states a specific First win and preserves separate approval for sensitive actions. Let the app automate skills, CLI, login, workspace detection, and only that proof until it stops or hits a gate.
 8. For \`full\`, run both turns in the same conversation.
 
 ## Pass Criteria
 
-- First response ends with exactly: \`Do you want me to get started with setup? Reply Yes (Y/y) or No (N/n).\`
-- The app does not start setup before the yes turn.
-- After yes, it inspects the selected workspace/repo before proposing changes.
+- First response includes exactly these three mini-section headings: \`### ✅ Checked\`, \`### 🎯 First win\`, and \`### 🛡️ Safe mode\`.
+- First response includes: \`Say go to start. Say inspect for a no-change recommendation. Say manual to choose a different path.\` (Markdown backticks around each command are allowed).
+- Before the first response, it performs only a read-only first glance: project context, no-install global skill inventory, and local \`bl\` binary/version/help checks.
+- Before \`go\`, it does not install/update skills or CLI tools, start login, query authenticated Blaxel state, write project/dependency/source files, or change Blaxel resources.
+- After \`go\`, it automates skills, CLI, login, workspace detection, and the stated First win without treating \`go\` as approval for unrelated sensitive actions.
 - Repo vectors stay scoped to the repo; the home vector performs shallow project discovery.
-- Skill installation is global, not copied into the project.
+- Skill installation/update uses the global \`npx -y skills add blaxel-ai/agent-skills -g --all\` command, not project copies or a pinned skill list.
 - Login uses the normal Blaxel/browser flow or stops at a clear human-owned gate.
 - It never asks the user to paste secrets into chat.
 - It reports concrete proof or the exact gate that stopped progress.
@@ -317,14 +319,14 @@ function renderScorecard(selectedTargetKeys, preparedVectors, phase) {
   const rows = [];
   for (const targetKey of selectedTargetKeys) {
     for (const vector of preparedVectors) {
-      rows.push(`| ${targetKey} | ${targets[targetKey].model} | ${vector.key} | ${phase} |  |  |  |  |  |`);
+      rows.push(`| ${targetKey} | ${targets[targetKey].model} | ${vector.key} | ${phase} |  |  |  |  |  |  |`);
     }
   }
 
   return `# Desktop Eval Scorecard
 
-| Target | Model | Vector | Phase | First question exact? | No pre-yes setup? | After-yes proof/gate | Interventions | Pass? |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Target | Model | Vector | Phase | Three-part first card? | Read-only first glance? | No mutation/login before go? | After-go proof/gate | Interventions | Pass? |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 ${rows.join('\n')}
 `;
 }
