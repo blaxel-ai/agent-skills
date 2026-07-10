@@ -49,7 +49,7 @@ const claudeSetupAllowedTools = [
   'Bash(git status --short --branch)',
   'Bash(command -v bl)',
   'Bash(npx -y skills add blaxel-ai/agent-skills -g --all)',
-  'Bash(npx --no-install skills list -g --json)',
+  'Bash(npx -y skills list -g --json)',
   'Bash(bl version)',
   'Bash(bl --version)',
   'Bash(bl --help)',
@@ -239,6 +239,7 @@ function runCapture(command, args, options = {}) {
     env: options.env,
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 8,
+    timeout: options.timeoutMs ?? 30_000,
   });
   return {
     command: [command, ...args].join(' '),
@@ -619,6 +620,12 @@ function codexBaseArgs(options, cwd, lastMessageFile) {
   if (agentAdapters.codex.defaultModel) {
     args.push('--model', agentAdapters.codex.defaultModel);
   }
+  if (agentAdapters.codex.reasoningEffort) {
+    args.push(
+      '-c',
+      `model_reasoning_effort="${agentAdapters.codex.reasoningEffort}"`,
+    );
+  }
   if (options.codexBypass) args.push('--dangerously-bypass-approvals-and-sandbox');
   return args;
 }
@@ -825,9 +832,12 @@ function buildPreflight(options) {
       claudeVersion: safeProbe('claude', ['--version'], probeEnv),
       cursorVersion: safeProbe('cursor', ['--version'], probeEnv),
       cursorAgentVersion: safeProbe('cursor-agent', ['--version'], probeEnv),
+      // Plan-mode preflight must stay diagnostic-only: do not download or run
+      // an uncached package. The actual onboarding contract uses the manifest's
+      // `npx -y skills list -g --json` command after installing the skills.
       skillInventory: safeProbe(
         'npx',
-        ['--no-install', 'skills', 'list', '-g', '--json'],
+        ['--offline', '--no-install', 'skills', 'list', '-g', '--json'],
         probeEnv,
       ),
       env: {
