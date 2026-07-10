@@ -13,7 +13,8 @@ export const agentAdapters = {
     versionArgs: ['--version'],
     headless: true,
     defaultModel: 'gpt-5.4',
-    summary: 'Runs `codex exec` with an explicit compatible model and records the last assistant message.',
+    reasoningEffort: 'xhigh',
+    summary: 'Runs `codex exec` with an explicit compatible model and reasoning effort, then records the last assistant message.',
   },
   claude: {
     key: 'claude',
@@ -269,6 +270,7 @@ export const publicHygieneFiles = [
   'scripts/onboarder-real-eval.mjs',
   'scripts/serve-onboarder-prompt.mjs',
   'scripts/verify-onboarder-prompt.mjs',
+  'scripts/verify-onboarder-skill-commands.mjs',
 ];
 
 export function selectByKey(items, key, label) {

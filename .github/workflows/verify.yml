@@ -21,3 +21,6 @@ jobs:
 
       - name: Verify onboarder prompt package
         run: node scripts/verify-onboarder-prompt.mjs
+
+      - name: Smoke test onboarder skill commands
+        run: node scripts/verify-onboarder-skill-commands.mjs

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,10 +29,10 @@ const requiredProductSectionSnippets = [
 ];
 const skillInstallCommand = 'npx -y skills add blaxel-ai/agent-skills -g --all';
 const skillUpdateCommand = 'npx -y skills add blaxel-ai/agent-skills -g --all';
-const skillListCommand = 'npx --no-install skills list -g --json';
+const skillListCommand = 'npx -y skills list -g --json';
 const requiredSupplementKeys = ['codex', 'claude', 'cursor'];
 const requiredHeadlessAdapters = ['codex', 'claude', 'cursor'];
-const currentPackageVersion = '0.11.0';
+const currentPackageVersion = '0.12.0';
 const requiredBasePromptSnippets = [
   'Use docs token-efficiently:',
   '## Plug-and-play setup contract',
@@ -238,7 +239,7 @@ if (manifest.schemaVersion !== 1) fail('schemaVersion must be 1');
 if (manifest.id !== 'blaxel-onboarder') fail('id must be blaxel-onboarder');
 assertString(manifest.version, 'version');
 if (!/^\d+\.\d+\.\d+$/.test(manifest.version)) {
-  fail('version must use semantic version format (for example 0.11.0)');
+  fail('version must use semantic version format (for example 0.12.0)');
 }
 if (manifest.version !== currentPackageVersion) {
   fail(`version must be ${currentPackageVersion}`);
@@ -290,16 +291,40 @@ for (const key of requiredSupplementKeys) {
   );
 }
 
+const normalizeLineEndings = (content) => content.replace(/\r\n?/g, '\n');
+const normalizePromptText = (content) => normalizeLineEndings(content).trim();
 const parts = {
-  basePrompt: readFileSync(basePromptPath, 'utf8').trim(),
-  agentPackage: readFileSync(agentPackagePath, 'utf8').trim(),
+  basePrompt: normalizePromptText(readFileSync(basePromptPath, 'utf8')),
+  agentPackage: normalizePromptText(readFileSync(agentPackagePath, 'utf8')),
   supplements: Object.fromEntries(
     Object.entries(supplementPaths).map(([key, path]) => [
       key,
-      readFileSync(path, 'utf8').trim(),
+      normalizePromptText(readFileSync(path, 'utf8')),
     ]),
   ),
 };
+
+const sha256 = (content) =>
+  createHash('sha256').update(content, 'utf8').digest('hex');
+if (manifest.integrity?.algorithm !== 'sha256') {
+  fail('integrity.algorithm must be sha256');
+}
+for (const [label, content, expected] of [
+  ['basePrompt', parts.basePrompt, manifest.integrity?.basePrompt],
+  ['agentPackage', parts.agentPackage, manifest.integrity?.agentPackage],
+  ...requiredSupplementKeys.map((key) => [
+    `supplements.${key}`,
+    parts.supplements[key],
+    manifest.integrity?.supplements?.[key],
+  ]),
+]) {
+  if (!/^[a-f0-9]{64}$/.test(expected ?? '')) {
+    fail(`integrity.${label} must be a lowercase SHA-256 hash`);
+  }
+  if (sha256(content) !== expected) {
+    fail(`integrity.${label} does not match its prompt file`);
+  }
+}
 
 for (const [label, content] of [
   ['prompt.md', parts.basePrompt],
@@ -374,19 +399,26 @@ if (parts.supplements.cursor.includes('Project rules: `.cursorrules`.')) {
   fail('Cursor supplement must not use legacy .cursorrules project rules');
 }
 
-const readme = readFileSync(join(root, 'README.md'), 'utf8');
+const readme = normalizeLineEndings(
+  readFileSync(join(root, 'README.md'), 'utf8'),
+);
 for (const snippet of [
-  'pins a reviewed immutable agent-skills commit for onboarding instructions',
-  "installs the latest skills from\nthe agent-skills default (`main`) branch with `--all`",
-  "Keep this package synchronized with controlplane's bundled fallback",
-  "Controlplane's v0.11.0 remote-contract gate requires the exact marker",
+  "consumes the current onboarding prompt package from this repo's\nprotected `main` branch",
+  'That branch is the reviewed release channel for\nonboarding instructions',
+  'Merging to `main` changes the prompt and commands shown by the hosted dashboard.',
+  'run the isolated install/list smoke test before publishing',
+  'Manifest SHA-256 hashes bind every markdown file to one reviewed package',
+  'a mixed or stale fetch fails closed',
+  'Package releases use exact\n`major.minor.patch` versions',
+  'Controlplane\nretains a bundled fallback',
+  "Controlplane's schema-v1 remote-contract gate requires the exact marker",
   '`Dashboard launch authorizes this bounded Blaxel bootstrap now`',
-  'The immutable manifest pin\nmust not be reused as a skills-version pin.',
   "compact Cursor deeplink is a separate payload",
   "informed consent for bounded end-to-end setup",
   "does\nnot authorize project writes or Blaxel resource creation.",
   `Current package (${manifest.version}):`,
-  `- \`${manifest.version}\`: makes dashboard launch informed consent`,
+  `- \`${manifest.version}\`: makes protected \`main\` the dashboard release channel`,
+  'node scripts/verify-onboarder-skill-commands.mjs',
 ]) {
   if (!readme.includes(snippet)) {
     fail(`README.md must document prompt pin/latest-skills parity: ${snippet}`);
@@ -401,6 +433,9 @@ for (const key of requiredHeadlessAdapters) {
 }
 if (!agentAdapters.codex.defaultModel) {
   fail('Codex eval adapter must pin an explicit compatible model');
+}
+if (agentAdapters.codex.reasoningEffort !== 'xhigh') {
+  fail('Codex eval adapter must override ambient reasoning effort with xhigh');
 }
 
 const contractSummary = harnessContractSummary();
@@ -435,17 +470,27 @@ for (const relativePath of checkpointFreeFiles) {
   }
 }
 
-const realEvalScript = readFileSync(
-  join(root, 'scripts', 'onboarder-real-eval.mjs'),
-  'utf8',
+const realEvalScript = normalizeLineEndings(
+  readFileSync(
+    join(root, 'scripts', 'onboarder-real-eval.mjs'),
+    'utf8',
+  ),
 );
 if (realEvalScript.includes("'--permission-mode',\n    'auto'")) {
   fail('Claude real eval must not use automatic broad tool permissions');
+}
+if (
+  !realEvalScript.includes(
+    "args.push(\n      '-c',\n      `model_reasoning_effort=\"${agentAdapters.codex.reasoningEffort}\"`,\n    );",
+  )
+) {
+  fail('Codex real eval must apply its explicit reasoning-effort override');
 }
 for (const snippet of [
   "'--permission-mode',\n    'manual'",
   "'--allowedTools'",
   "'Bash(npx -y skills add blaxel-ai/agent-skills -g --all)'",
+  "'Bash(npx -y skills list -g --json)'",
   "'Bash(bl --version)'",
   "'Bash(bl login)'",
   "'Bash(bl workspaces --current)'",

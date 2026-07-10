@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "id": "blaxel-onboarder",
-  "version": "0.11.0",
-  "updatedAt": "2026-07-09",
+  "version": "0.12.0",
+  "updatedAt": "2026-07-10",
   "skillInstallCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
   "skillUpdateCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
-  "skillListCommand": "npx --no-install skills list -g --json",
+  "skillListCommand": "npx -y skills list -g --json",
   "docs": [
     "https://docs.blaxel.ai/llms.txt",
     "https://docs.blaxel.ai/llms-full.txt",
@@ -13,6 +13,16 @@
   ],
   "mcp": {
     "resourceEndpoint": "https://api.blaxel.ai/v0/mcp"
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "basePrompt": "df0444cfb1ab1f399f834cbf00d5a4acab3adb811d2f83f2f791f04353f5e83e",
+    "agentPackage": "37ddae85ea4b45efc4fffc0c7390dffdb44c6ec1da54c0b1e4e80772db323050",
+    "supplements": {
+      "codex": "23896bca1d809d8587af2aaf85a3a36fafd724374b1dcb78a034af4bab3f428c",
+      "claude": "108546575b954ce30ab740466304bf94306769092a8dce41183d12c76c159b31",
+      "cursor": "ceb3cc3be615a61e3611af54b94857abd8120a0d2fc2767275dfb63fdb6e7a6c"
+    }
   },
   "files": {
     "basePrompt": "./prompt.md",

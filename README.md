@@ -4,23 +4,27 @@ Agent skills for building and deploying AI workloads on Blaxel.
 
 ## Onboarder prompt package
 
-Controlplane consumes the versioned onboarding prompt package from this repo. It
-pins a reviewed immutable agent-skills commit for onboarding instructions, while
-the prompt's install/update command intentionally installs the latest skills from
-the agent-skills default (`main`) branch with `--all`. The immutable manifest pin
-must not be reused as a skills-version pin.
+Controlplane consumes the current onboarding prompt package from this repo's
+protected `main` branch. That branch is the reviewed release channel for
+onboarding instructions, so prompt-only fixes publish without a controlplane
+repin. The prompt's install/update command likewise installs the latest skills
+from `main` with `--all`.
 
-Keep this package synchronized with controlplane's bundled fallback whenever the
-onboarding contract changes. The fallback is used for package-fetch failure or
-an incompatible/retired remote contract; it must preserve the same bootstrap,
-safety, and response behavior as the reviewed package commit.
+Merging to `main` changes the prompt and commands shown by the hosted dashboard.
+Treat changes under `prompts/onboarder/v1/` as code: review them, keep the Verify
+workflow green, and run the isolated install/list smoke test before publishing.
+Manifest SHA-256 hashes bind every markdown file to one reviewed package
+version; a mixed or stale fetch fails closed. Package releases use exact
+`major.minor.patch` versions (no prerelease or build suffixes). Controlplane
+retains a bundled fallback for package-fetch failure or an incompatible/retired
+remote contract.
 
-Controlplane's v0.11.0 remote-contract gate requires the exact marker
+Controlplane's schema-v1 remote-contract gate requires the exact marker
 `Dashboard launch authorizes this bounded Blaxel bootstrap now` and rejects
 retired setup-confirmation contracts. Keep that marker and the bundled fallback
-semantically aligned whenever this package changes.
+semantically aligned whenever the onboarding contract changes.
 
-Current package (0.11.0):
+Current package (0.12.0):
 
 - Manifest: [`prompts/onboarder/v1/manifest.json`](prompts/onboarder/v1/manifest.json)
 - Base prompt: [`prompts/onboarder/v1/prompt.md`](prompts/onboarder/v1/prompt.md)
@@ -29,6 +33,7 @@ Current package (0.11.0):
 
 ### Version history
 
+- `0.12.0`: makes protected `main` the dashboard release channel, adds per-file integrity checks for atomic package loading, fixes fresh-environment skill verification, and adds a real isolated install/list CI smoke test.
 - `0.11.0`: makes dashboard launch informed consent for bounded end-to-end setup, adds the approved product sections to every full payload, and hardens project/path, proof, browser-gate, approval-boundary, and filesystem evaluation.
 - `0.10.0`: aligned the package with the dashboard fallback, latest-skill installation, and the multi-agent evaluation harness.
 
@@ -37,6 +42,7 @@ Verify prompt and evaluator changes before opening a PR:
 ```shell
 node --test scripts/onboarder-harness/*.test.mjs
 node scripts/verify-onboarder-prompt.mjs
+node scripts/verify-onboarder-skill-commands.mjs
 ```
 
 Serve the prompt package locally with CORS for controlplane preview iteration:
@@ -87,7 +93,7 @@ gate are verified by the controlplane onboarder tests, not by this desktop packe
 Check or refresh global Blaxel skills:
 
 ```shell
-npx --no-install skills list -g --json
+npx -y skills list -g --json
 npx -y skills add blaxel-ai/agent-skills -g --all
 ```
 

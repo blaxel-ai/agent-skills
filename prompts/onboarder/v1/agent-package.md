@@ -9,7 +9,7 @@ npx -y skills add blaxel-ai/agent-skills -g --all
 Check installed global skills:
 
 ```shell
-npx --no-install skills list -g --json
+npx -y skills list -g --json
 ```
 
 Update installed Blaxel skills to the latest package version:
