@@ -62,6 +62,7 @@ bl connect     # Open an interactive terminal session to a sandbox
 bl delete      # Delete Blaxel resources from your workspace.
 bl deploy      # Deploy your Blaxel project to the cloud.
 bl drive       # Manage drives and drive mounts on sandboxes.
+bl fork        # Create a new sandbox or application by forking an existing sandbox.
 bl get         # Retrieve information about Blaxel resources in your workspace.
 bl login       # Authenticate with Blaxel to access your workspace.
 bl logout      # Remove stored credentials for a workspace.
@@ -89,6 +90,8 @@ bl workspaces  # List and manage Blaxel workspaces.
 - [delete](references/delete.md) - Delete Blaxel resources from your workspace.
 - [deploy](references/deploy.md) - Deploy your Blaxel project to the cloud.
 - [drive](references/drive.md) - Manage drives and drive mounts on sandboxes.
+- [fork](references/fork.md) - Create a new sandbox or application by forking an
+  existing sandbox.
 - [get](references/get.md) - Retrieve information about Blaxel resources in your
   workspace.
 - [login](references/login.md) - Authenticate with Blaxel to access your

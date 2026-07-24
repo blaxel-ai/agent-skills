@@ -12,6 +12,7 @@ A "resource" in Blaxel refers to any deployable or manageable entity:
 - functions/mcp: Model Context Protocol servers (tool providers)
 - jobs: Batch processing tasks
 - sandboxes: Isolated execution environments
+- applications: Application deployments with revision-based traffic management
 - models: AI model configurations
 - policies: Access control policies
 - volumes: Persistent storage
@@ -122,6 +123,7 @@ Examples:
 
 Available Commands:
   agents                 List all agents or get details of a specific one
+  applications           List all applications or get details of a specific one
   drives                 List all drives or get details of a specific one
   functions              List all functions or get details of a specific one
   image                  Get image information
@@ -171,6 +173,34 @@ Flags:
       --all             Fetch all pages (may be slow for large collections)
       --cursor string   Cursor from a previous page to fetch the next page of results
   -h, --help            help for agents
+      --limit int       Maximum number of items to return (auto-paginates when above 200) (default 200)
+
+Global Flags:
+  -o, --output string          Output format. One of: pretty,yaml,json,table
+      --skip-version-warning   Skip version warning
+  -u, --utc                    Enable UTC timezone
+  -v, --verbose                Enable verbose output
+      --watch                  After listing/getting the requested object, watch for changes.
+  -w, --workspace string       Specify the workspace name
+```
+
+### applications
+
+> List all applications or get details of a specific one
+
+```
+List all applications or get details of a specific one
+
+Usage:
+  bl get applications [flags]
+
+Aliases:
+  applications, application, app, apps
+
+Flags:
+      --all             Fetch all pages (may be slow for large collections)
+      --cursor string   Cursor from a previous page to fetch the next page of results
+  -h, --help            help for applications
       --limit int       Maximum number of items to return (auto-paginates when above 200) (default 200)
 
 Global Flags:

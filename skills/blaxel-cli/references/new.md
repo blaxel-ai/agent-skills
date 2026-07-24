@@ -14,6 +14,9 @@ Resource Types:
   agent     - AI agent application that can chat, use tools, and access data
               Use cases: Customer support bots, coding assistants, data analysts
 
+  app       - Web application deployed on Blaxel infrastructure
+              Use cases: Next.js apps, web services, frontend applications
+
   mcp       - Model Context Protocol server that extends agent capabilities
               Use cases: Custom tools, API integrations, database connectors
 
