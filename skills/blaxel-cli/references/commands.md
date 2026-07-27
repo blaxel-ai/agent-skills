@@ -9,6 +9,8 @@
 - [delete](./delete.md) - Delete Blaxel resources from your workspace.
 - [deploy](./deploy.md) - Deploy your Blaxel project to the cloud.
 - [drive](./drive.md) - Manage drives and drive mounts on sandboxes.
+- [fork](./fork.md) - Create a new sandbox or application by forking an existing
+  sandbox.
 - [get](./get.md) - Retrieve information about Blaxel resources in your
   workspace.
 - [login](./login.md) - Authenticate with Blaxel to access your workspace.

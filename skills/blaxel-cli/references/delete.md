@@ -79,6 +79,7 @@ Examples:
 
 Available Commands:
   agent                 Delete one or more agents
+  application           Delete one or more applications
   drive                 Delete one or more drives
   function              Delete one or more functions
   image                 Delete images or image tags
@@ -124,6 +125,30 @@ Aliases:
 
 Flags:
   -h, --help   help for agent
+
+Global Flags:
+  -o, --output string          Output format. One of: pretty,yaml,json,table
+      --skip-version-warning   Skip version warning
+  -u, --utc                    Enable UTC timezone
+  -v, --verbose                Enable verbose output
+  -w, --workspace string       Specify the workspace name
+```
+
+### application
+
+> Delete one or more applications
+
+```
+Delete one or more applications
+
+Usage:
+  bl delete application name [name...] [flags]
+
+Aliases:
+  application, applications, app, apps
+
+Flags:
+  -h, --help   help for application
 
 Global Flags:
   -o, --output string          Output format. One of: pretty,yaml,json,table
