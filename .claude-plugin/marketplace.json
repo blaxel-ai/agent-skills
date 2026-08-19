@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "blaxel",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Blaxel agent skills for building and deploying AI workloads.",
   "owner": {
     "name": "Blaxel",

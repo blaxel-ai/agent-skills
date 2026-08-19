@@ -99,21 +99,32 @@ npx -y skills add blaxel-ai/agent-skills -g --all
 
 ## Installation
 
-### npx skills
-```shell
-npx -y skills add blaxel-ai/agent-skills -g --all
-```
+The plugin bundles two skills (`blaxel-sdk`, `blaxel-cli`) and the hosted Blaxel MCP server
+at `https://api.blaxel.ai/v0/mcp`. The MCP server signs clients in with OAuth 2.1, so
+authenticate once after installing.
 
 ### Claude Code plugin
 ```shell
 claude plugin marketplace add blaxel-ai/agent-skills
 claude plugin install blaxel
 ```
-Installs both the `blaxel-sdk` and `blaxel-cli` skills.
+Run `/mcp` in Claude Code and sign in to the `blaxel` server.
 
 ### Codex plugin
 ```shell
 codex plugin marketplace add blaxel-ai/agent-skills
 codex plugin add blaxel@blaxel
+codex mcp login blaxel
 ```
-Installs both the `blaxel-sdk` and `blaxel-cli` skills.
+
+### Cursor plugin
+```shell
+cursor-agent plugin marketplace add https://github.com/blaxel-ai/agent-skills
+```
+Install **Blaxel** from the marketplace in Cursor, then approve the OAuth sign-in prompt.
+
+### npx skills
+```shell
+npx -y skills add blaxel-ai/agent-skills -g --all
+```
+Installs the skills only, without the MCP server.

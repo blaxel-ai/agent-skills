@@ -1,6 +1,6 @@
 {
   "name": "blaxel",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Blaxel agent skills for building and deploying AI workloads. Includes the Blaxel SDK skill for creating cloud sandboxes and deploying agents, and the Blaxel CLI skill for managing Blaxel resources from the command line.",
   "author": {
     "name": "Blaxel",
@@ -12,6 +12,7 @@
   "license": "MIT",
   "keywords": ["sandbox", "microvm", "compute", "isolation", "security", "agent", "volume", "firecracker", "cli"],
   "skills": "./skills",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Blaxel",
     "shortDescription": "Build and deploy AI agents with cloud sandboxes and CLI tools.",

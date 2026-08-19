@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "blaxel": {
+      "type": "http",
+      "url": "https://api.blaxel.ai/v0/mcp"
+    }
+  }
+}
