@@ -12,6 +12,7 @@ A "resource" in Blaxel refers to any deployable or manageable entity:
 - functions/mcp: Model Context Protocol servers (tool providers)
 - jobs: Batch processing tasks
 - sandboxes: Isolated execution environments
+- snapshots: Point-in-time captures a sandbox or application can be created from
 - applications: Application deployments with revision-based traffic management
 - models: AI model configurations
 - policies: Access control policies
@@ -79,6 +80,12 @@ Examples:
   bl get mcp-hub
   bl get mcp-hub -o json
 
+  # List snapshots in the workspace
+  bl get snapshots
+
+  # Get a specific snapshot by id (from bl get snapshots)
+  bl get snapshot 6f1c2e3a-8b4d-4c2e-9f0a-1d2e3f4a5b6c
+
   # Monitor sandbox status
   bl get sandbox my-sandbox --watch
 
@@ -136,6 +143,7 @@ Available Commands:
   previewtokens          List all previewtokens or get details of a specific one
   sandbox-hub            List pre-built sandbox images available in the Blaxel Hub
   sandboxes              List all sandboxes or get details of a specific one
+  snapshots              List all snapshots or get details of a specific one
   templates              List available project templates
   volumes                List all volumes or get details of a specific one
   volumetemplates        List all volumetemplates or get details of a specific one
@@ -548,6 +556,28 @@ Aliases: sandboxes, sandbox, sbx
 Flags: --all Fetch all pages (may be slow for large collections) --cursor string
 Cursor from a previous page to fetch the next page of results -h, --help help
 for sandboxes --limit int Maximum number of items to return (auto-paginates when
+above 200) (default 200)
+
+Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table
+--skip-version-warning Skip version warning -u, --utc Enable UTC timezone -v,
+--verbose Enable verbose output --watch After listing/getting the requested
+object, watch for changes. -w, --workspace string Specify the workspace name
+
+```
+### snapshots
+
+> List all snapshots or get details of a specific one
+```
+
+List all snapshots or get details of a specific one
+
+Usage: bl get snapshots [flags]
+
+Aliases: snapshots, snapshot, snap
+
+Flags: --all Fetch all pages (may be slow for large collections) --cursor string
+Cursor from a previous page to fetch the next page of results -h, --help help
+for snapshots --limit int Maximum number of items to return (auto-paginates when
 above 200) (default 200)
 
 Global Flags: -o, --output string Output format. One of: pretty,yaml,json,table

@@ -43,6 +43,9 @@ Examples:
   bl delete volume vol1 vol2 vol3
   bl delete agent agent1 agent2
 
+  # Delete a snapshot (removed from the workspace, source sandbox untouched)
+  bl delete snapshot 6f1c2e3a-8b4d-4c2e-9f0a-1d2e3f4a5b6c
+
   # Delete a sandbox preview
   bl delete sandbox my-sandbox preview my-preview
 
@@ -90,6 +93,7 @@ Available Commands:
   preview               Delete one or more previews
   previewtoken          Delete one or more previewtokens
   sandbox               Delete one or more sandboxes
+  snapshot              Delete one or more snapshots
   volume                Delete one or more volumes
   volumetemplate        Delete one or more volumetemplates
 
@@ -386,6 +390,30 @@ Aliases:
 
 Flags:
   -h, --help   help for sandbox
+
+Global Flags:
+  -o, --output string          Output format. One of: pretty,yaml,json,table
+      --skip-version-warning   Skip version warning
+  -u, --utc                    Enable UTC timezone
+  -v, --verbose                Enable verbose output
+  -w, --workspace string       Specify the workspace name
+```
+
+### snapshot
+
+> Delete one or more snapshots
+
+```
+Delete one or more snapshots
+
+Usage:
+  bl delete snapshot name [name...] [flags]
+
+Aliases:
+  snapshot, snapshots, snap
+
+Flags:
+  -h, --help   help for snapshot
 
 Global Flags:
   -o, --output string          Output format. One of: pretty,yaml,json,table
