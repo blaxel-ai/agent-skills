@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "blaxel",
   "version": "1.2.0",
-  "description": "Blaxel agent skills for building and deploying AI workloads.",
+  "description": "Blaxel agent skills and MCP server for building and deploying AI workloads.",
   "owner": {
     "name": "Blaxel",
     "email": "support@blaxel.ai",
@@ -12,7 +12,7 @@
     {
       "name": "blaxel",
       "source": "./",
-      "description": "Blaxel agent skills bundle: SDK skill for creating cloud sandboxes (microVMs) to run code, start dev servers and generate live preview URLs, plus CLI skill for managing Blaxel resources (agents, sandboxes, jobs, MCP servers) from the command line.",
+      "description": "Blaxel agent skills bundle: SDK skill for creating cloud sandboxes (microVMs) to run code, start dev servers and generate live preview URLs, CLI skill for managing Blaxel resources (agents, sandboxes, jobs, MCP servers) from the command line, and the hosted Blaxel MCP server for managing workspace resources.",
       "author": { "name": "Blaxel", "email": "support@blaxel.ai", "url": "https://blaxel.ai" },
       "homepage": "https://docs.blaxel.ai",
       "repository": "https://github.com/blaxel-ai/agent-skills",
