@@ -1,0 +1,34 @@
+{
+  "name": "blaxel",
+  "displayName": "Blaxel",
+  "version": "1.2.0",
+  "description": "Build and deploy AI agents on Blaxel. Bundles the hosted Blaxel MCP server for managing workspace resources, the SDK skill for creating cloud sandboxes (microVMs) with live preview URLs and shared Agent Drives, and the CLI skill for deploying agents, sandboxes, jobs, and MCP servers from the command line.",
+  "author": {
+    "name": "Blaxel",
+    "email": "support@blaxel.ai"
+  },
+  "homepage": "https://docs.blaxel.ai",
+  "repository": "https://github.com/blaxel-ai/agent-skills",
+  "license": "MIT",
+  "logo": "./skills/blaxel-sdk/assets/blaxel-logo.svg",
+  "keywords": [
+    "sandbox",
+    "mcp",
+    "agent",
+    "volume",
+    "isolated-compute",
+    "shared-context",
+    "persistence"
+  ],
+  "category": "developer-tools",
+  "tags": [
+    "automation",
+    "infrastructure",
+    "ai-native",
+    "sandbox",
+    "compute",
+    "isolated-execution"
+  ],
+  "skills": ["./skills/blaxel-sdk", "./skills/blaxel-cli"],
+  "mcpServers": "./.mcp.json"
+}
