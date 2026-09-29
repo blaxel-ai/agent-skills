@@ -113,7 +113,7 @@ authenticate once after installing.
 ### Claude Code plugin
 ```shell
 claude plugin marketplace add blaxel-ai/agent-skills
-claude plugin install blaxel@blaxel
+claude plugin install blaxel
 ```
 Run `/mcp` in Claude Code and sign in to the `plugin:blaxel:blaxel` server. Add the
 marketplace first: without it, the install fails with `Plugin "blaxel" not found in any
