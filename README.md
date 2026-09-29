@@ -19,20 +19,26 @@ version; a mixed or stale fetch fails closed. Package releases use exact
 retains a bundled fallback for package-fetch failure or an incompatible/retired
 remote contract.
 
-Controlplane's schema-v1 remote-contract gate requires the exact marker
-`Dashboard launch authorizes this bounded Blaxel bootstrap now` and rejects
-retired setup-confirmation contracts. Keep that marker and the bundled fallback
-semantically aligned whenever the onboarding contract changes.
+Controlplane's schema-v1 remote-contract gate requires the marker
+`Launching this prompt authorizes this bounded Blaxel bootstrap now` and rejects
+retired setup-confirmation contracts. Packages before 0.13.0 carry
+`Dashboard launch authorizes this bounded Blaxel bootstrap now` instead.
+Controlplane builds that know only one marker fall back to their bundled copy
+when the package carries the other, so release the controlplane side of a
+marker change first. Keep the marker and the bundled fallback semantically
+aligned whenever the onboarding contract changes.
 
-Current package (0.12.0):
+Current package (0.13.0):
 
 - Manifest: [`prompts/onboarder/v1/manifest.json`](prompts/onboarder/v1/manifest.json)
 - Base prompt: [`prompts/onboarder/v1/prompt.md`](prompts/onboarder/v1/prompt.md)
 - Agent package: [`prompts/onboarder/v1/agent-package.md`](prompts/onboarder/v1/agent-package.md)
+- Compact prompt for size-limited links (Cursor): [`prompts/onboarder/v1/compact-prompt.md`](prompts/onboarder/v1/compact-prompt.md)
 - Supplements: [`prompts/onboarder/v1/supplements/`](prompts/onboarder/v1/supplements/)
 
 ### Version history
 
+- `0.13.0`: words the launch contract for any launcher instead of the dashboard alone, moves the compact Cursor prompt into the package with integrity and Cursor link checks, and adds Goose and Devin Desktop supplements.
 - `0.12.0`: makes protected `main` the dashboard release channel, adds per-file integrity checks for atomic package loading, fixes fresh-environment skill verification, and adds a real isolated install/list CI smoke test.
 - `0.11.0`: makes dashboard launch informed consent for bounded end-to-end setup, adds the approved product sections to every full payload, and hardens project/path, proof, browser-gate, approval-boundary, and filesystem evaluation.
 - `0.10.0`: aligned the package with the dashboard fallback, latest-skill installation, and the multi-agent evaluation harness.
@@ -86,9 +92,10 @@ node scripts/onboarder-desktop-eval.mjs --target all --vector all --phase setup
 
 This creates real temporary project workspaces plus full-package prompts for
 Cursor Composer 2.5 and Claude Desktop Sonnet 4.6. Use the generated `RUNBOOK.md`
-and `scorecard.md` while driving the apps with Computer Use. Controlplane's
-compact Cursor deeplink is a separate payload; its content parity and URL-length
-gate are verified by the controlplane onboarder tests, not by this desktop packet.
+and `scorecard.md` while driving the apps with Computer Use. The compact Cursor
+deeplink prompt is a separate payload, `compact-prompt.md`. The verify script
+checks that it fits Cursor's link with the package section and the Cursor
+supplement appended; this desktop packet does not cover it.
 
 Check or refresh global Blaxel skills:
 

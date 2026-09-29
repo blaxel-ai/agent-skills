@@ -44,7 +44,7 @@ MCP entrypoints:
 - Use the Blaxel resource MCP only after the human approves a secure authenticated configuration. Never ask the user to paste auth headers, tokens, API keys, credentials, or secrets into chat. Resource MCP endpoint: https://api.blaxel.ai/v0/mcp
 
 Guardrails:
-- Dashboard launch consent covers bounded Blaxel tool setup only, not project writes or Blaxel resource creation.
+- Launch consent covers bounded Blaxel tool setup only, not project writes or Blaxel resource creation.
 - Never invent credentials, workspace names, quotas, billing state, or deployed resource status.
 - Stop for human approval before creating, revealing, rotating, or storing API keys or tokens.
 - Stop for human approval before billing, payment, workspace access, production-risk, or destructive resource changes.

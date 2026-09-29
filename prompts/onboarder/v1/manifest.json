@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "id": "blaxel-onboarder",
-  "version": "0.12.0",
-  "updatedAt": "2026-07-10",
+  "version": "0.13.0",
+  "updatedAt": "2026-09-28",
   "skillInstallCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
   "skillUpdateCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
   "skillListCommand": "npx -y skills list -g --json",
@@ -16,21 +16,27 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "basePrompt": "df0444cfb1ab1f399f834cbf00d5a4acab3adb811d2f83f2f791f04353f5e83e",
-    "agentPackage": "37ddae85ea4b45efc4fffc0c7390dffdb44c6ec1da54c0b1e4e80772db323050",
+    "basePrompt": "8ec74f8e4a5608c4cc02af9ee15e2cbb0387fae7de83a6cdd29a54656f7f29c3",
+    "agentPackage": "2868f2b76206f3394ebad06223124f56ed8f6f87dee950d21c5bfb23b77a3ed6",
+    "compactPrompt": "3443f9144fab7d46fdfff30a758ca859c91527a2e9184bebec97e882f0a45243",
     "supplements": {
       "codex": "23896bca1d809d8587af2aaf85a3a36fafd724374b1dcb78a034af4bab3f428c",
       "claude": "108546575b954ce30ab740466304bf94306769092a8dce41183d12c76c159b31",
-      "cursor": "ceb3cc3be615a61e3611af54b94857abd8120a0d2fc2767275dfb63fdb6e7a6c"
+      "cursor": "ceb3cc3be615a61e3611af54b94857abd8120a0d2fc2767275dfb63fdb6e7a6c",
+      "goose": "6afb35c8d765739d4f1ddb6f665b9cd6300226b395cdc6998e33c6982a10a286",
+      "devin": "710ac29c002fbeace25f4fb11cc87d8d3dcb383d0c754f6e1e948a47ca233a06"
     }
   },
   "files": {
     "basePrompt": "./prompt.md",
     "agentPackage": "./agent-package.md",
+    "compactPrompt": "./compact-prompt.md",
     "supplements": {
       "codex": "./supplements/codex.md",
       "claude": "./supplements/claude.md",
-      "cursor": "./supplements/cursor.md"
+      "cursor": "./supplements/cursor.md",
+      "goose": "./supplements/goose.md",
+      "devin": "./supplements/devin.md"
     }
   }
 }

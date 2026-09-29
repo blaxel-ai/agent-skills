@@ -30,13 +30,13 @@ const requiredProductSectionSnippets = [
 const skillInstallCommand = 'npx -y skills add blaxel-ai/agent-skills -g --all';
 const skillUpdateCommand = 'npx -y skills add blaxel-ai/agent-skills -g --all';
 const skillListCommand = 'npx -y skills list -g --json';
-const requiredSupplementKeys = ['codex', 'claude', 'cursor'];
+const requiredSupplementKeys = ['codex', 'claude', 'cursor', 'goose', 'devin'];
 const requiredHeadlessAdapters = ['codex', 'claude', 'cursor'];
-const currentPackageVersion = '0.12.0';
+const currentPackageVersion = '0.13.0';
 const requiredBasePromptSnippets = [
   'Use docs token-efficiently:',
   '## Plug-and-play setup contract',
-  'Dashboard launch authorizes this bounded Blaxel bootstrap now, whether the current directory is a project, a repository, a home directory, or an empty folder.',
+  'Launching this prompt authorizes this bounded Blaxel bootstrap now, whether the current directory is a project, a repository, a home directory, or an empty folder.',
   'Do not ask for another setup confirmation.',
   'inspect the current directory, git root/status, folder shape, likely project type, and the most relevant app or project path without changing project files',
   'install or update the official global Blaxel skills with the command in this package, then verify the installed skill list',
@@ -80,6 +80,29 @@ const requiredBasePromptSnippets = [
   'durable agent onboarding pack',
   '`.cursor/rules/blaxel.mdc`',
 ];
+const requiredCompactPromptSnippets = [
+  '# Blaxel onboarding prompt',
+  'Use docs token-efficiently:',
+  '## Plug-and-play setup contract',
+  'Launching this prompt authorizes this bounded Blaxel bootstrap now.',
+  'Never ask for pasted tokens or API keys.',
+  'This launch does not authorize project/source/dependency writes',
+  '### How Blaxel powers your agents',
+  '### What you can build on Blaxel',
+  'Keep the Boundaries sentence exactly as written',
+  '## ⚡ Blaxel setup',
+  '### ✅ Bootstrap',
+  '### 🎯 Proposed first win',
+  '### 🛡️ Boundaries',
+  '## After bootstrap',
+  'durable agent onboarding pack',
+];
+// Consumers open Cursor with the compact prompt, then the package section they append (the
+// console's is the longest, with a commit-pinned manifest URL), then the Cursor supplement.
+// Cursor parses the decoded text as a query string again, so "&" cuts the prompt short and
+// "+" arrives as a space, and it refuses prompts that mention .env files.
+const cursorLinkBase = 'https://cursor.com/link/prompt?text=';
+const cursorMaxLinkLength = 8000;
 const forbiddenLegacyBasePromptSnippets = [
   'Do you want me to get started with setup? Reply Yes (Y/y) or No (N/n).',
   'First-glance rule:',
@@ -103,6 +126,10 @@ const forbiddenLegacyBasePromptSnippets = [
   '### 🎯 First win',
   '## If I reply inspect, inspect only, or manual',
   'unless you say `go`',
+  // Any launcher can open the package, so it must not say it came from the dashboard.
+  'I want to get started with Blaxel from the dashboard.',
+  'Dashboard launch authorizes this bounded Blaxel bootstrap now',
+  'Dashboard launch consent covers',
 ];
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -137,10 +164,13 @@ const legacyCheckpointPatterns = [
 const checkpointFreeFiles = [
   'README.md',
   'prompts/onboarder/v1/agent-package.md',
+  'prompts/onboarder/v1/compact-prompt.md',
   'prompts/onboarder/v1/prompt.md',
   'prompts/onboarder/v1/supplements/claude.md',
   'prompts/onboarder/v1/supplements/codex.md',
   'prompts/onboarder/v1/supplements/cursor.md',
+  'prompts/onboarder/v1/supplements/devin.md',
+  'prompts/onboarder/v1/supplements/goose.md',
   'scripts/onboarder-desktop-eval.mjs',
   'scripts/onboarder-harness/contract.mjs',
   'scripts/onboarder-real-eval.mjs',
@@ -291,11 +321,18 @@ for (const key of requiredSupplementKeys) {
   );
 }
 
+const compactPromptPath = resolveManifestFile(
+  manifest,
+  files.compactPrompt,
+  'files.compactPrompt',
+);
+
 const normalizeLineEndings = (content) => content.replace(/\r\n?/g, '\n');
 const normalizePromptText = (content) => normalizeLineEndings(content).trim();
 const parts = {
   basePrompt: normalizePromptText(readFileSync(basePromptPath, 'utf8')),
   agentPackage: normalizePromptText(readFileSync(agentPackagePath, 'utf8')),
+  compactPrompt: normalizePromptText(readFileSync(compactPromptPath, 'utf8')),
   supplements: Object.fromEntries(
     Object.entries(supplementPaths).map(([key, path]) => [
       key,
@@ -312,6 +349,7 @@ if (manifest.integrity?.algorithm !== 'sha256') {
 for (const [label, content, expected] of [
   ['basePrompt', parts.basePrompt, manifest.integrity?.basePrompt],
   ['agentPackage', parts.agentPackage, manifest.integrity?.agentPackage],
+  ['compactPrompt', parts.compactPrompt, manifest.integrity?.compactPrompt],
   ...requiredSupplementKeys.map((key) => [
     `supplements.${key}`,
     parts.supplements[key],
@@ -329,6 +367,7 @@ for (const [label, content, expected] of [
 for (const [label, content] of [
   ['prompt.md', parts.basePrompt],
   ['agent-package.md', parts.agentPackage],
+  ['compact-prompt.md', parts.compactPrompt],
   ...Object.entries(parts.supplements).map(([key, content]) => [
     `supplements/${key}.md`,
     content,
@@ -386,7 +425,7 @@ for (const snippet of forbiddenLegacyBasePromptSnippets) {
 }
 for (const snippet of [
   'Never ask the user to paste auth headers, tokens, API keys, credentials, or secrets into chat.',
-  'Dashboard launch consent covers bounded Blaxel tool setup only, not project writes or Blaxel resource creation.',
+  'Launch consent covers bounded Blaxel tool setup only, not project writes or Blaxel resource creation.',
 ]) {
   if (!parts.agentPackage.includes(snippet)) {
     fail(`agent-package.md must include setup safety snippet: ${snippet}`);
@@ -397,6 +436,39 @@ if (!parts.supplements.cursor.includes('Project rules: `.cursor/rules/*.mdc`.'))
 }
 if (parts.supplements.cursor.includes('Project rules: `.cursorrules`.')) {
   fail('Cursor supplement must not use legacy .cursorrules project rules');
+}
+
+for (const snippet of requiredCompactPromptSnippets) {
+  if (!parts.compactPrompt.includes(snippet)) {
+    fail(`compact-prompt.md must include required behavior snippet: ${snippet}`);
+  }
+}
+for (const snippet of forbiddenLegacyBasePromptSnippets) {
+  if (parts.compactPrompt.includes(snippet)) {
+    fail(`compact-prompt.md must not include legacy behavior snippet: ${snippet}`);
+  }
+}
+const compactPackageSection = [
+  '## Package to load',
+  '',
+  `- Verified manifest source: https://raw.githubusercontent.com/blaxel-ai/agent-skills/${'0'.repeat(40)}/prompts/onboarder/v1/manifest.json`,
+  `- Package id: ${manifest.id}`,
+  `- Package version: ${manifest.version}`,
+  `- Skill list command: ${manifest.skillListCommand}`,
+  `- Skill update command: ${manifest.skillUpdateCommand}`,
+  `- Skill install command: ${manifest.skillInstallCommand}`,
+  `- Docs: ${manifest.docs.join(', ')}`,
+  '',
+  'The dashboard already loaded and integrity-verified this package. Use the version and commands embedded here; do not refetch mutable package files.',
+].join('\n');
+const cursorPayload = `${parts.compactPrompt}\n\n${compactPackageSection}\n\n${parts.supplements.cursor}`;
+const cursorBreaker = /[&+]|\.env\b/.exec(cursorPayload);
+if (cursorBreaker) {
+  fail(`the Cursor payload must not contain "${cursorBreaker[0]}": Cursor would cut, change or refuse the prompt`);
+}
+const cursorLinkLength = cursorLinkBase.length + encodeURIComponent(cursorPayload).length;
+if (cursorLinkLength > cursorMaxLinkLength) {
+  fail(`the Cursor payload needs a ${cursorLinkLength}-character link; consumers allow ${cursorMaxLinkLength}`);
 }
 
 const readme = normalizeLineEndings(
@@ -411,13 +483,14 @@ for (const snippet of [
   'a mixed or stale fetch fails closed',
   'Package releases use exact\n`major.minor.patch` versions',
   'Controlplane\nretains a bundled fallback',
-  "Controlplane's schema-v1 remote-contract gate requires the exact marker",
-  '`Dashboard launch authorizes this bounded Blaxel bootstrap now`',
-  "compact Cursor deeplink is a separate payload",
+  "Controlplane's schema-v1 remote-contract gate requires the marker",
+  '`Launching this prompt authorizes this bounded Blaxel bootstrap now`',
+  'release the controlplane side of a\nmarker change first',
+  'deeplink prompt is a separate payload, `compact-prompt.md`',
   "informed consent for bounded end-to-end setup",
   "does\nnot authorize project writes or Blaxel resource creation.",
   `Current package (${manifest.version}):`,
-  `- \`${manifest.version}\`: makes protected \`main\` the dashboard release channel`,
+  `- \`${manifest.version}\`: words the launch contract for any launcher`,
   'node scripts/verify-onboarder-skill-commands.mjs',
 ]) {
   if (!readme.includes(snippet)) {
@@ -517,6 +590,7 @@ console.log(
         label,
         characters: payload.length,
       })),
+      cursorLink: { characters: cursorLinkLength, limit: cursorMaxLinkLength },
     },
     null,
     2,

@@ -1,12 +1,12 @@
 # Blaxel onboarding prompt
 
-I want to get started with Blaxel from the dashboard.
+I want to get started with Blaxel.
 
 Use the Blaxel agent package below as your operating context. If your environment already supports agent skills, load the official Blaxel skills when useful. Otherwise use the included command and agent-readable docs as reference material. Use docs token-efficiently: start from llms.txt or the most relevant docs entry, and only pull llms-full.txt when the task really needs broad context.
 
 ## Plug-and-play setup contract
 
-Dashboard launch authorizes this bounded Blaxel bootstrap now, whether the current directory is a project, a repository, a home directory, or an empty folder. Do not ask for another setup confirmation.
+Launching this prompt authorizes this bounded Blaxel bootstrap now, whether the current directory is a project, a repository, a home directory, or an empty folder. Do not ask for another setup confirmation.
 
 Before the first final answer, continue through this bounded setup when tools are available:
 - inspect the current directory, git root/status, folder shape, likely project type, and the most relevant app or project path without changing project files
@@ -23,7 +23,7 @@ Launch consent is narrowly bounded. It does not authorize arbitrary project/sour
 
 If the initiating user request includes a concrete build goal, after setup you may proceed with only the minimum non-production work needed for that stated goal, subject to every approval boundary above. A generic onboarding request is not a concrete build goal: finish bootstrap, propose one project-specific sandbox-first next goal, and wait for task-specific approval before changing the project or Blaxel resources.
 
-Product shape: do not call this a dashboard wizard or offer a choice between an in-product wizard and command-line setup. Treat the dashboard as the human-owned control surface and this chat as the setup conversation. Default to sandbox-first only when a concrete goal calls for a Blaxel execution surface.
+Product shape: do not call this a wizard or offer a choice between an in-product wizard and command-line setup. Treat the Blaxel Console as the human-owned control surface and this chat as the setup conversation. Default to sandbox-first only when a concrete goal calls for a Blaxel execution surface.
 
 ### How Blaxel powers your agents
 
