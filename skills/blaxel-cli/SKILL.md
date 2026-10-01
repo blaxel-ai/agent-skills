@@ -72,6 +72,7 @@ bl push        # Build and push a container image to the Blaxel registry without
 bl run         # Execute a Blaxel resource with custom input data.
 bl serve       # Start a local development server for your Blaxel project.
 bl share       # Share Blaxel resources with other workspaces in your account.
+bl skills      # Manage Blaxel skills for coding agents
 bl token       # Retrieve the authentication token for the specified workspace.
 bl unshare     # Remove shared Blaxel resources from other workspaces.
 bl upgrade     # Upgrade the Blaxel CLI to the latest version.
@@ -106,6 +107,7 @@ bl workspaces  # List and manage Blaxel workspaces.
   Blaxel project.
 - [share](references/share.md) - Share Blaxel resources with other workspaces in
   your account.
+- [skills](references/skills.md) - Manage Blaxel skills for coding agents
 - [token](references/token.md) - Retrieve the authentication token for the
   specified workspace.
 - [unshare](references/unshare.md) - Remove shared Blaxel resources from other

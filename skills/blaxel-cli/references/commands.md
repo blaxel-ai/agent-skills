@@ -24,6 +24,7 @@
   project.
 - [share](./share.md) - Share Blaxel resources with other workspaces in your
   account.
+- [skills](./skills.md) - Manage Blaxel skills for coding agents
 - [token](./token.md) - Retrieve the authentication token for the specified
   workspace.
 - [unshare](./unshare.md) - Remove shared Blaxel resources from other
