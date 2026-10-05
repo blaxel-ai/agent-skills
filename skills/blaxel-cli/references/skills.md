@@ -30,13 +30,13 @@ Use "bl skills [command] --help" for more information about a command.
 
 ### install
 
-> Install Blaxel agent skills globally with a version-pinned, integrity-checked
-> installer.
+> Install the latest Blaxel agent skills globally from
+> github.com/blaxel-ai/agent-skills.
 
 ```
-Install Blaxel agent skills globally with a version-pinned, integrity-checked installer.
+Install the latest Blaxel agent skills globally from github.com/blaxel-ai/agent-skills.
 Skills go to ~/.agents/skills and to the coding agents detected on this machine
-(Claude Code, Codex, Cursor, ...). Requires Node.js 22.20.0 or later, npm and git.
+(Claude Code, Codex, Cursor, ...). Nothing else needs to be installed first.
 This explicit command runs even when automatic installation is disabled with
 BL_INSTALL_SKILLS=false or in CI.
 
