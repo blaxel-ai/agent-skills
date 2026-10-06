@@ -22,6 +22,8 @@
 - [run](./run.md) - Execute a Blaxel resource with custom input data.
 - [serve](./serve.md) - Start a local development server for your Blaxel
   project.
+- [setup](./setup.md) - Set up everything Blaxel needs on this machine, then log
+  in.
 - [share](./share.md) - Share Blaxel resources with other workspaces in your
   account.
 - [skills](./skills.md) - Manage Blaxel skills for coding agents
