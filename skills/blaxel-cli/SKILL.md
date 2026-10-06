@@ -71,6 +71,7 @@ bl new         # Create a new Blaxel resource from templates.
 bl push        # Build and push a container image to the Blaxel registry without creating a deployment.
 bl run         # Execute a Blaxel resource with custom input data.
 bl serve       # Start a local development server for your Blaxel project.
+bl setup       # Set up everything Blaxel needs on this machine, then log in.
 bl share       # Share Blaxel resources with other workspaces in your account.
 bl skills      # Manage Blaxel skills for coding agents
 bl token       # Retrieve the authentication token for the specified workspace.
@@ -105,6 +106,8 @@ bl workspaces  # List and manage Blaxel workspaces.
 - [run](references/run.md) - Execute a Blaxel resource with custom input data.
 - [serve](references/serve.md) - Start a local development server for your
   Blaxel project.
+- [setup](references/setup.md) - Set up everything Blaxel needs on this machine,
+  then log in.
 - [share](references/share.md) - Share Blaxel resources with other workspaces in
   your account.
 - [skills](references/skills.md) - Manage Blaxel skills for coding agents
