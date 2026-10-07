@@ -10,7 +10,7 @@ Launching this prompt authorizes this bounded Blaxel bootstrap now. Complete it 
 
 - Inspect the local environment and project context without changing project files.
 - Install or update the official global Blaxel skills with the package command, then verify them. Skills are instructions and need no credentials merely to load.
-- Install or update `bl` with the package's official OS installer, follow its PATH instructions, and complete `bl setup` (without a terminal: `bl setup --yes`, which skips browser login). Verify version/help output.
+- Install or update `bl` with the package's official OS installer, follow its PATH instructions, and, if setup has not already completed, run `bl setup` (without a terminal: `bl setup --yes`, which skips browser login). Verify version/help output.
 - Check Blaxel authentication; when needed, start `bl login` and present browser account approval. For unattended automation use existing `BL_API_KEY` and `BL_WORKSPACE` from the environment. Never ask for pasted tokens or API keys.
 - Confirm the active workspace from authenticated state.
 

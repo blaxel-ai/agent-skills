@@ -18,7 +18,7 @@
     "algorithm": "sha256",
     "basePrompt": "2f77c983c3d727978cd55655ab99d5ec326d1c1b75eec79cc508d5880fc9d507",
     "agentPackage": "8eae14d7784eba04c1aafd7e6a23a2f7922b37edbdb849dab7987a91894f0fff",
-    "compactPrompt": "bf27a470a1779d98709b53a3c9436465e543d2f8e796cfcab05f8ae6184ede9d",
+    "compactPrompt": "a7537dbc622805e10f678ae8d5da238e5aa9ae3573126c7e6905dfe9a203f629",
     "supplements": {
       "codex": "23896bca1d809d8587af2aaf85a3a36fafd724374b1dcb78a034af4bab3f428c",
       "claude": "108546575b954ce30ab740466304bf94306769092a8dce41183d12c76c159b31",
