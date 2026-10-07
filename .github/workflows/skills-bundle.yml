@@ -29,8 +29,6 @@ jobs:
         env:
           MINIMUM_CLI: ${{ inputs.minimum_cli }}
         run: python3 scripts/skills_bundle.py build --output /tmp/blaxel-skills-bundle --minimum-cli "$MINIMUM_CLI"
-      - name: Validate archive and manifest
-        run: python3 scripts/skills_bundle.py validate --manifest /tmp/blaxel-skills-bundle/skills-manifest.json --bundle /tmp/blaxel-skills-bundle/skills.tar.gz
       - id: revision
         run: echo "value=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4

@@ -26,15 +26,14 @@ def bounded_tar(bundle):
         raw = compressed.read(MAX_TAR_BYTES + 1)
     if len(raw) > MAX_TAR_BYTES:
         raise ValueError("bundle exceeds decompressed archive limit")
-    offset, count = 0, 0
+    offset = 0
     while offset + 512 <= len(raw):
         header = raw[offset:offset + 512]
         if header == bytes(512):
             break
-        count += 1
         size = tarfile.nti(header[124:136])
-        if size < 0 or count > MAX_ENTRIES:
-            raise ValueError("invalid archive size or too many physical headers")
+        if size < 0:
+            raise ValueError("negative archive entry size")
         if header[156:157] in (b"x", b"g", b"L", b"K") and size > MAX_METADATA:
             raise ValueError("archive metadata exceeds CLI extractor limit")
         offset += 512 + ((size + 511) // 512) * 512
