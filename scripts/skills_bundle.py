@@ -15,7 +15,32 @@ REPO = "blaxel-ai/agent-skills"
 MAX_ARCHIVE = 32 << 20
 MAX_EXTRACTED = 64 << 20
 MAX_ENTRIES = 10000
+MAX_TAR_BYTES = MAX_EXTRACTED + MAX_ENTRIES * 1024
+MAX_METADATA = 1 << 20  # Go archive/tar's maximum special-header payload.
 REQUIRED_SKILLS = {"blaxel-cli", "blaxel-sdk"}
+
+
+def bounded_tar(bundle):
+    # Include metadata and padding in the bound before tarfile parses them.
+    with gzip.GzipFile(fileobj=io.BytesIO(bundle)) as compressed:
+        raw = compressed.read(MAX_TAR_BYTES + 1)
+    if len(raw) > MAX_TAR_BYTES:
+        raise ValueError("bundle exceeds decompressed archive limit")
+    offset, count = 0, 0
+    while offset + 512 <= len(raw):
+        header = raw[offset:offset + 512]
+        if header == bytes(512):
+            break
+        count += 1
+        size = tarfile.nti(header[124:136])
+        if size < 0 or count > MAX_ENTRIES:
+            raise ValueError("invalid archive size or too many physical headers")
+        if header[156:157] in (b"x", b"g", b"L", b"K") and size > MAX_METADATA:
+            raise ValueError("archive metadata exceeds CLI extractor limit")
+        offset += 512 + ((size + 511) // 512) * 512
+        if offset > len(raw):
+            raise ValueError("truncated archive entry")
+    return raw
 
 
 def validate(manifest, bundle):
@@ -30,7 +55,7 @@ def validate(manifest, bundle):
     if len(bundle) > MAX_ARCHIVE or hashlib.sha256(bundle).hexdigest() != manifest.get("sha256"):
         raise ValueError("bundle size or checksum mismatch")
     total, names, found = 0, set(), set()
-    with tarfile.open(fileobj=io.BytesIO(bundle), mode="r:gz") as archive:
+    with tarfile.open(fileobj=io.BytesIO(bounded_tar(bundle)), mode="r:") as archive:
         for count, entry in enumerate(archive):
             total += entry.size
             if count >= MAX_ENTRIES or total > MAX_EXTRACTED:

@@ -51,6 +51,24 @@ class SkillsBundleTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(b"checksum mismatch", result.stderr)
 
+    def test_rejects_oversized_pax_metadata_with_valid_checksum(self):
+        output = io.BytesIO()
+        with tarfile.open(fileobj=output, mode="w", format=tarfile.PAX_FORMAT,
+                          pax_headers={"comment": "x" * (2 << 20)}) as archive:
+            for name in ("blaxel-cli", "blaxel-sdk"):
+                content = f"---\nname: {name}\ndescription: Fixture skill.\n---\n".encode()
+                entry = tarfile.TarInfo(f"agent-skills-{self.manifest['revision']}/skills/{name}/SKILL.md")
+                entry.size = len(content)
+                archive.addfile(entry, io.BytesIO(content))
+        bundle = gzip.compress(output.getvalue(), mtime=0)
+        manifest = dict(self.manifest, sha256=hashlib.sha256(bundle).hexdigest())
+        with self.assertRaisesRegex(ValueError, "metadata exceeds CLI extractor limit"):
+            skills_bundle.validate(manifest, bundle)
+        # A gzip bomb made of padding is bounded before archive parsing too.
+        oversized = gzip.compress(bytes(skills_bundle.MAX_TAR_BYTES + 1), mtime=0)
+        with self.assertRaisesRegex(ValueError, "decompressed archive limit"):
+            skills_bundle.validate(dict(self.manifest, sha256=hashlib.sha256(oversized).hexdigest()), oversized)
+
     def test_publication_does_not_replace_an_existing_release(self):
         # Execute the workflow's publication block with a local gh fixture;
         # no GitHub credentials, tags, releases or network are involved.
