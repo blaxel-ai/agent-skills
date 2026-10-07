@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Blaxel CLI
-        run: curl -fsSL https://raw.githubusercontent.com/blaxel-ai/toolkit/main/install.sh | sh
+        run: curl -fsSL https://blaxel.ai/install.sh | sh
 
       - name: Verify CLI
         run: bl version

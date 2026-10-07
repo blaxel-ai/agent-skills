@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "id": "blaxel-onboarder",
-  "version": "0.13.0",
-  "updatedAt": "2026-09-28",
+  "version": "0.13.1",
+  "updatedAt": "2026-10-06",
   "skillInstallCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
   "skillUpdateCommand": "npx -y skills add blaxel-ai/agent-skills -g --all",
   "skillListCommand": "npx -y skills list -g --json",
@@ -16,9 +16,9 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "basePrompt": "8ec74f8e4a5608c4cc02af9ee15e2cbb0387fae7de83a6cdd29a54656f7f29c3",
-    "agentPackage": "2868f2b76206f3394ebad06223124f56ed8f6f87dee950d21c5bfb23b77a3ed6",
-    "compactPrompt": "3443f9144fab7d46fdfff30a758ca859c91527a2e9184bebec97e882f0a45243",
+    "basePrompt": "2f77c983c3d727978cd55655ab99d5ec326d1c1b75eec79cc508d5880fc9d507",
+    "agentPackage": "8eae14d7784eba04c1aafd7e6a23a2f7922b37edbdb849dab7987a91894f0fff",
+    "compactPrompt": "bf27a470a1779d98709b53a3c9436465e543d2f8e796cfcab05f8ae6184ede9d",
     "supplements": {
       "codex": "23896bca1d809d8587af2aaf85a3a36fafd724374b1dcb78a034af4bab3f428c",
       "claude": "108546575b954ce30ab740466304bf94306769092a8dce41183d12c76c159b31",

@@ -18,6 +18,44 @@ Update installed Blaxel skills to the latest package version:
 npx -y skills add blaxel-ai/agent-skills -g --all
 ```
 
+Set up the Blaxel command with the official installer for this operating system.
+
+macOS or Linux:
+
+```shell
+curl -fsSL https://blaxel.ai/install.sh | sh
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://blaxel.ai/install.ps1 | iex
+```
+
+Follow the installer's PATH or shell-reload instructions. If setup has not
+already completed, run:
+
+```shell
+bl setup
+```
+
+Without a terminal, use `bl setup --yes`; setup skips browser login there.
+Check existing sign-in first. If needed, run `bl login`, open or present the
+secure browser URL, and continue after account approval. Verify the selected
+workspace rather than inventing one. For unattended automation, use an existing
+`BL_API_KEY` and `BL_WORKSPACE` supplied securely through the environment;
+commands use them directly. Never ask for pasted secrets or write them to agent
+configuration.
+
+Verify setup:
+
+```shell
+bl version
+bl workspaces --current
+```
+
+Treat empty workspace output as incomplete sign-in.
+
 The Blaxel skills package includes:
 - `blaxel-cli`: use when troubleshooting, bootstrapping a project on Blaxel, or managing resources from the command line with the `bl` CLI.
 - `blaxel-sdk`: use when building agents or MCP servers on Blaxel, or when programmatic resource management through Blaxel SDKs is the better path.

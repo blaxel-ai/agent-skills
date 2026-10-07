@@ -57,9 +57,9 @@ const claudeSetupAllowedTools = [
   'Bash(bl workspaces)',
   'Bash(bl workspaces --current)',
   'Bash(bl login)',
-  'Bash(brew tap blaxel-ai/blaxel)',
-  'Bash(brew install blaxel)',
-  'Bash(curl -fsSL https://raw.githubusercontent.com/blaxel-ai/toolkit/main/install.sh | sh)',
+  'Bash(bl setup --help)',
+  'Bash(bl setup --yes)',
+  'Bash(curl -fsSL https://blaxel.ai/install.sh | sh)',
 ];
 
 const usage = `Usage:

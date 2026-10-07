@@ -17,23 +17,48 @@ The `bl` command must be available on PATH. To check:
 bl version
 ```
 
-If not installed, install via the official install script:
+If not installed, use the official installer for this operating system.
+
+macOS or Linux:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/blaxel-ai/toolkit/main/install.sh | sh
+curl -fsSL https://blaxel.ai/install.sh | sh
 ```
 
-Or via Homebrew:
+Windows PowerShell:
+
+```powershell
+irm https://blaxel.ai/install.ps1 | iex
+```
+
+Follow the installer's PATH or shell-reload instructions, then complete setup:
 
 ```bash
-brew tap blaxel-ai/blaxel && brew install blaxel
+bl setup
 ```
 
-After installation, log in to your workspace:
+Setup installs the Blaxel skills and configures supported coding agents. In a
+terminal, it also offers browser login. If the installer already completed
+setup, verify the result instead of repeating it.
+
+When running without a terminal, use `bl setup --yes`. Setup skips browser login
+in that environment. If sign-in is still needed, run `bl login`, present its
+secure browser URL, and continue after the user approves it. Confirm the
+selected workspace from command output; do not guess a workspace name or ask for
+pasted credentials.
+
+For unattended automation, use an existing `BL_API_KEY` and `BL_WORKSPACE`
+supplied securely through the environment. Commands can use these directly; do
+not start browser login or persist the key in agent configuration.
+
+Verify the installed command and active workspace:
 
 ```bash
-bl login my-workspace
+bl version
+bl workspaces --current
 ```
+
+Treat empty workspace output as incomplete sign-in.
 
 ## Global Flags
 

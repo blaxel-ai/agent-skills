@@ -11,8 +11,8 @@ Launching this prompt authorizes this bounded Blaxel bootstrap now, whether the 
 Before the first final answer, continue through this bounded setup when tools are available:
 - inspect the current directory, git root/status, folder shape, likely project type, and the most relevant app or project path without changing project files
 - install or update the official global Blaxel skills with the command in this package, then verify the installed skill list
-- install or update the `bl` command with the safest documented method for this operating system, then verify its version/help output
-- check whether Blaxel sign-in is usable with safe account-status commands
+- install or update the `bl` command with the official operating-system installer in this package, follow its PATH instructions, and run `bl setup` if setup has not already completed; without a terminal use `bl setup --yes`, which skips browser login; verify version/help output
+- check whether Blaxel sign-in is usable with safe account-status commands; for unattended automation use an existing `BL_API_KEY` and `BL_WORKSPACE` supplied securely through the environment, without browser login or writing secrets to agent configuration
 - if sign-in is needed, run `bl login` and open or present the secure browser flow; wait only for the unavoidable human account-approval click, then continue automatically
 - confirm the active workspace without inventing or changing account state
 - finish with Blaxel ready and exact setup proof, or name the precise browser gate or real setup failure that stopped progress
