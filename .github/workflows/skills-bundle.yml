@@ -1,0 +1,64 @@
+name: Prepare skills bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      minimum_cli:
+        description: Oldest released CLI version supporting this bundle
+        required: true
+        type: string
+      publish_bundle:
+        description: Publish the tested immutable bundle (channel promotion requires a separate reviewed PR)
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      revision: ${{ steps.revision.outputs.value }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Test bundle tooling
+        run: python3 -m unittest discover -s scripts -p 'test_skills_bundle.py'
+      - name: Build immutable bundle and channel manifest
+        env:
+          MINIMUM_CLI: ${{ inputs.minimum_cli }}
+        run: python3 scripts/skills_bundle.py build --output /tmp/blaxel-skills-bundle --minimum-cli "$MINIMUM_CLI"
+      - name: Validate archive and manifest
+        run: python3 scripts/skills_bundle.py validate --manifest /tmp/blaxel-skills-bundle/skills-manifest.json --bundle /tmp/blaxel-skills-bundle/skills.tar.gz
+      - id: revision
+        run: echo "value=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blaxel-skills-bundle
+          path: /tmp/blaxel-skills-bundle/
+          retention-days: 7
+
+  publish:
+    if: inputs.publish_bundle
+    needs: bundle
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: blaxel-skills-bundle
+          path: /tmp/blaxel-skills-bundle
+      - name: Create a new revision release without replacing existing assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REVISION: ${{ needs.bundle.outputs.revision }}
+        run: |
+          tag="skills-$REVISION"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release already exists; immutable bundles cannot be replaced."
+            exit 1
+          fi
+          gh release create "$tag" /tmp/blaxel-skills-bundle/skills.tar.gz /tmp/blaxel-skills-bundle/skills-manifest.json --target "$REVISION" --title "$tag" --notes "Immutable Blaxel skills bundle. Channel promotion requires a reviewed manifest PR." --latest=false

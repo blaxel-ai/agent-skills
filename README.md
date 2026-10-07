@@ -2,6 +2,54 @@
 
 Agent skills for building and deploying AI workloads on Blaxel.
 
+## CLI skills update channel
+
+The CLI update channel uses a small static manifest at
+`releases/skills-manifest.json` on the reviewed `main` branch. It names a full Git
+revision, the immutable `skills-<revision>` GitHub release bundle, its SHA-256,
+and the minimum compatible CLI version. The checksum checks download integrity;
+publisher trust comes from the CLI's fixed HTTPS origin and repository review.
+
+The **Prepare skills bundle** workflow runs only on `main`. By default it builds,
+tests and uploads an artifact without publishing. Maintainers may explicitly
+select `publish_bundle` to create a new revision release; the workflow refuses
+to replace an existing release. Keep release tags and assets unchanged. To
+promote the channel, submit the generated `skills-manifest.json` as
+`releases/skills-manifest.json` in a separate reviewed PR after confirming the
+bundle is downloadable and the specified CLI version is released. Choose the
+oldest released version that supports the bundle, not a development build.
+
+The initial bundle must be published only after the toolkit updater and this
+release tooling have been reviewed and merged. Until a channel manifest is
+promoted, the updater treats its absence as an initial rollout skip; existing
+installation paths continue to work. No bundle or channel publication is
+performed by merging this tooling alone.
+
+Build and validate locally without publishing:
+
+```shell
+python3 -m unittest discover -s scripts -p 'test_skills_bundle.py'
+python3 scripts/skills_bundle.py build --output /tmp/blaxel-skills-bundle --minimum-cli 0.1.121
+python3 scripts/skills_bundle.py validate --manifest /tmp/blaxel-skills-bundle/skills-manifest.json --bundle /tmp/blaxel-skills-bundle/skills.tar.gz
+```
+
+The local example's version exercises the format; it does not claim that the
+updater is already released in that CLI. Bundle generation reads committed
+files at `HEAD` (or `--revision`), so uncommitted skill edits are not released.
+Archives and extraction are capped at 32 MiB and 64 MiB, with 10,000 entries.
+
+Repository maintainers own bundle publication, minimum-version selection and
+channel promotion. Roll back with a reviewed manifest change to a previously
+verified compatible bundle; never edit that bundle. CLI versions that include
+the updater can pause automatic updates with `bl skills autoupdate off`, inspect revisions and skips with
+`bl skills status`, and explicitly refresh with `bl skills update`. Manual
+refresh bypasses the saved preference, while preserving edited or externally
+managed folders. Explicit install and setup can also refresh skills. CLI/MCP
+checks share one machine state and run at most once
+every six hours; offline failures wait for the next slot. Plugin installations
+remain owned by the plugin manager. Agents may retain loaded instructions for
+the current conversation, so restart the agent to load updated skills.
+
 ## Onboarder prompt package
 
 Controlplane consumes the current onboarding prompt package from this repo's

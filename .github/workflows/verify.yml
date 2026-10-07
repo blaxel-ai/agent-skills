@@ -19,6 +19,9 @@ jobs:
       - name: Test onboarder evaluator
         run: node --test scripts/onboarder-harness/*.test.mjs
 
+      - name: Test immutable skills bundle tooling
+        run: python3 -m unittest discover -s scripts -p 'test_skills_bundle.py'
+
       - name: Verify onboarder prompt package
         run: node scripts/verify-onboarder-prompt.mjs
 
