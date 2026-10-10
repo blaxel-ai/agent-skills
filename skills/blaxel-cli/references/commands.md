@@ -16,6 +16,8 @@
 - [login](./login.md) - Authenticate with Blaxel to access your workspace.
 - [logout](./logout.md) - Remove stored credentials for a workspace.
 - [logs](./logs.md) - View logs for Blaxel resources.
+- [mcp](./mcp.md) - Serve the hosted Blaxel MCP tools over stdio using your
+  existing bl login.
 - [new](./new.md) - Create a new Blaxel resource from templates.
 - [push](./push.md) - Build and push a container image to the Blaxel registry
   without creating a deployment.
