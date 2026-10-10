@@ -32,7 +32,7 @@ const skillUpdateCommand = 'npx -y skills add blaxel-ai/agent-skills -g --all';
 const skillListCommand = 'npx -y skills list -g --json';
 const requiredSupplementKeys = ['codex', 'claude', 'cursor', 'goose', 'devin'];
 const requiredHeadlessAdapters = ['codex', 'claude', 'cursor'];
-const currentPackageVersion = '0.13.0';
+const currentPackageVersion = '0.13.1';
 const requiredBasePromptSnippets = [
   'Use docs token-efficiently:',
   '## Plug-and-play setup contract',
@@ -40,7 +40,9 @@ const requiredBasePromptSnippets = [
   'Do not ask for another setup confirmation.',
   'inspect the current directory, git root/status, folder shape, likely project type, and the most relevant app or project path without changing project files',
   'install or update the official global Blaxel skills with the command in this package, then verify the installed skill list',
-  'install or update the `bl` command with the safest documented method for this operating system, then verify its version/help output',
+  'install or update the `bl` command with the official operating-system installer in this package',
+  'without a terminal use `bl setup --yes`, which skips browser login',
+  'for unattended automation use an existing `BL_API_KEY` and `BL_WORKSPACE` supplied securely through the environment',
   'if sign-in is needed, run `bl login` and open or present the secure browser flow',
   'wait only for the unavoidable human account-approval click, then continue automatically',
   'confirm the active workspace without inventing or changing account state',
@@ -86,6 +88,8 @@ const requiredCompactPromptSnippets = [
   '## Plug-and-play setup contract',
   'Launching this prompt authorizes this bounded Blaxel bootstrap now.',
   'Never ask for pasted tokens or API keys.',
+  'bl setup --yes',
+  'For unattended automation use existing `BL_API_KEY` and `BL_WORKSPACE` from the environment.',
   'This launch does not authorize project/source/dependency writes',
   '### How Blaxel powers your agents',
   '### What you can build on Blaxel',
@@ -424,6 +428,10 @@ for (const snippet of forbiddenLegacyBasePromptSnippets) {
   }
 }
 for (const snippet of [
+  'curl -fsSL https://blaxel.ai/install.sh | sh',
+  'irm https://blaxel.ai/install.ps1 | iex',
+  'bl setup --yes',
+  '`BL_API_KEY` and `BL_WORKSPACE` supplied securely through the environment',
   'Never ask the user to paste auth headers, tokens, API keys, credentials, or secrets into chat.',
   'Launch consent covers bounded Blaxel tool setup only, not project writes or Blaxel resource creation.',
 ]) {
@@ -490,7 +498,8 @@ for (const snippet of [
   "informed consent for bounded end-to-end setup",
   "does\nnot authorize project writes or Blaxel resource creation.",
   `Current package (${manifest.version}):`,
-  `- \`${manifest.version}\`: words the launch contract for any launcher`,
+  '- `0.13.0`: words the launch contract for any launcher',
+  `- \`${manifest.version}\`: uses the official OS installers and \`bl setup\``,
   'node scripts/verify-onboarder-skill-commands.mjs',
 ]) {
   if (!readme.includes(snippet)) {
@@ -566,6 +575,8 @@ for (const snippet of [
   "'Bash(npx -y skills list -g --json)'",
   "'Bash(bl --version)'",
   "'Bash(bl login)'",
+  "'Bash(bl setup --yes)'",
+  "'Bash(curl -fsSL https://blaxel.ai/install.sh | sh)'",
   "'Bash(bl workspaces --current)'",
 ]) {
   if (!realEvalScript.includes(snippet)) {

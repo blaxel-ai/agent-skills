@@ -253,6 +253,7 @@ export const vectors = [
 ];
 
 export const publicHygieneFiles = [
+  '.github/workflows/update-cli-docs.yml',
   '.github/workflows/verify.yml',
   'README.md',
   'prompts/onboarder/v1/agent-package.md',
@@ -274,6 +275,8 @@ export const publicHygieneFiles = [
   'scripts/serve-onboarder-prompt.mjs',
   'scripts/verify-onboarder-prompt.mjs',
   'scripts/verify-onboarder-skill-commands.mjs',
+  'skills/blaxel-cli/SKILL.template.md',
+  'skills/blaxel-cli/SKILL.md',
 ];
 
 export function selectByKey(items, key, label) {

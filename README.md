@@ -76,7 +76,7 @@ when the package carries the other, so release the controlplane side of a
 marker change first. Keep the marker and the bundled fallback semantically
 aligned whenever the onboarding contract changes.
 
-Current package (0.13.0):
+Current package (0.13.1):
 
 - Manifest: [`prompts/onboarder/v1/manifest.json`](prompts/onboarder/v1/manifest.json)
 - Base prompt: [`prompts/onboarder/v1/prompt.md`](prompts/onboarder/v1/prompt.md)
@@ -86,6 +86,7 @@ Current package (0.13.0):
 
 ### Version history
 
+- `0.13.1`: uses the official OS installers and `bl setup`, with browser login for agents and existing environment credentials for unattended automation.
 - `0.13.0`: words the launch contract for any launcher instead of the dashboard alone, moves the compact Cursor prompt into the package with integrity and Cursor link checks, and adds Goose and Devin Desktop supplements.
 - `0.12.0`: makes protected `main` the dashboard release channel, adds per-file integrity checks for atomic package loading, fixes fresh-environment skill verification, and adds a real isolated install/list CI smoke test.
 - `0.11.0`: makes dashboard launch informed consent for bounded end-to-end setup, adds the approved product sections to every full payload, and hardens project/path, proof, browser-gate, approval-boundary, and filesystem evaluation.
