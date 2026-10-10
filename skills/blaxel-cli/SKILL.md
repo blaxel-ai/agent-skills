@@ -92,6 +92,7 @@ bl get         # Retrieve information about Blaxel resources in your workspace.
 bl login       # Authenticate with Blaxel to access your workspace.
 bl logout      # Remove stored credentials for a workspace.
 bl logs        # View logs for Blaxel resources.
+bl mcp         # Serve the hosted Blaxel MCP tools over stdio using your existing bl login.
 bl new         # Create a new Blaxel resource from templates.
 bl push        # Build and push a container image to the Blaxel registry without creating a deployment.
 bl run         # Execute a Blaxel resource with custom input data.
@@ -125,6 +126,8 @@ bl workspaces  # List and manage Blaxel workspaces.
   workspace.
 - [logout](references/logout.md) - Remove stored credentials for a workspace.
 - [logs](references/logs.md) - View logs for Blaxel resources.
+- [mcp](references/mcp.md) - Serve the hosted Blaxel MCP tools over stdio using
+  your existing bl login.
 - [new](references/new.md) - Create a new Blaxel resource from templates.
 - [push](references/push.md) - Build and push a container image to the Blaxel
   registry without creating a deployment.
