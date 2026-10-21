@@ -9,6 +9,35 @@ allowed-tools: Bash(bl:*), Bash(curl:*)
 A CLI to manage Blaxel cloud resources from the command line: agents, sandboxes,
 jobs, MCP servers, drives, and more.
 
+## Deleting resources
+
+Deletes are permanent, and workspaces are often shared: a delete can remove
+someone else's work or data. Before any delete, stop, kill, overwrite or
+unshare, find the operation in
+[references/destructive-operations.md](references/destructive-operations.md) and
+follow its tier:
+
+1. **Data and account resources** (volumes, volume templates, drives and drive
+   files, images, snapshots, secrets, integration connections, policies, service
+   accounts and API keys, workspaces): delete only after a person confirms each
+   exact name. A request to "clean up" is not that confirmation; list the exact
+   names and ask.
+2. **Compute** (sandboxes, agents, functions and MCP servers, jobs, models,
+   applications, previews): delete only what this session created, one command
+   per resource, by exact name. Record each name when you create it; a matching
+   prefix, label or creator does not make a resource yours.
+3. **Never** delete from a listing, label, name prefix, pattern or before/after
+   diff of listings, and never sweep a workspace: no `--all`, no
+   `bl delete -f DIRECTORY` or `-R`, no names from `$(bl get ...)`, `xargs` or a
+   loop. The bulk `jq` examples in older `bl delete --help` output and
+   [references/delete.md](references/delete.md) are not for agents.
+
+Test in a scratch workspace with an API key scoped to it, and treat any
+workspace you did not create as read-only unless the user says otherwise.
+`bl delete` never asks for confirmation and has no `--yes` or `-y` flag: it
+deletes as soon as it runs, so get the confirmation a tier needs from the user
+before you run it.
+
 ## Prerequisites
 
 The `bl` command must be available on PATH. To check:
@@ -74,9 +103,11 @@ All commands support these flags:
 
 ## Non-Interactive Mode
 
-For commands that prompt for input (confirmations, selections), add `-y` or
-`--yes` to auto-confirm. This is required when running in non-interactive /
-no-TTY environments (scripts, CI, agents).
+`bl new`, `bl deploy`, `bl push` and `bl setup` prompt for input; add `-y` or
+`--yes` to skip the prompts in non-interactive / no-TTY environments (scripts,
+CI, agents). The flag does not stand in for the user's approval. Other commands
+have no such flag, and `bl delete` never prompts (see "Deleting resources"
+above).
 
 ## Available Commands
 

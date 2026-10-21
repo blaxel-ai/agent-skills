@@ -256,6 +256,9 @@ export const publicHygieneFiles = [
   '.github/workflows/update-cli-docs.yml',
   '.github/workflows/verify.yml',
   'README.md',
+  'evals/README.md',
+  'evals/delete-safety/cleanup-test-sandboxes.md',
+  'evals/delete-safety/delete-the-volume.md',
   'prompts/onboarder/v1/agent-package.md',
   'prompts/onboarder/v1/compact-prompt.md',
   'prompts/onboarder/v1/manifest.json',
@@ -273,10 +276,14 @@ export const publicHygieneFiles = [
   'scripts/onboarder-harness/filesystem.test.mjs',
   'scripts/onboarder-real-eval.mjs',
   'scripts/serve-onboarder-prompt.mjs',
+  'scripts/verify-delete-safety.mjs',
   'scripts/verify-onboarder-prompt.mjs',
   'scripts/verify-onboarder-skill-commands.mjs',
   'skills/blaxel-cli/SKILL.template.md',
   'skills/blaxel-cli/SKILL.md',
+  'skills/blaxel-cli/references/destructive-operations.md',
+  'skills/blaxel-sdk/SKILL.md',
+  'skills/blaxel-sdk/references/destructive-operations.md',
 ];
 
 export function selectByKey(items, key, label) {

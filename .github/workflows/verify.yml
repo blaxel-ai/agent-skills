@@ -27,3 +27,6 @@ jobs:
 
       - name: Smoke test onboarder skill commands
         run: node scripts/verify-onboarder-skill-commands.mjs
+
+      - name: Verify delete-safety rules and inventory
+        run: node scripts/verify-delete-safety.mjs

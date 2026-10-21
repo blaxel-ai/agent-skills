@@ -16,6 +16,9 @@ const SKILL_TEMPLATE = join(SKILL_DIR, "SKILL.template.md");
 // Commands to skip (not useful for docs)
 const SKIP_COMMANDS = ["completion", "help"];
 
+// Hand-written references kept when generated references are replaced
+const HAND_WRITTEN_REFERENCES = ["destructive-operations.md"];
+
 interface CommandInfo {
   name: string;
   description: string;
@@ -252,7 +255,10 @@ async function main() {
 
   // Clean up old generated files
   for await (const entry of Deno.readDir(REFERENCES_DIR)) {
-    if (entry.name.endsWith(".md")) {
+    if (
+      entry.name.endsWith(".md") &&
+      !HAND_WRITTEN_REFERENCES.includes(entry.name)
+    ) {
       await Deno.remove(join(REFERENCES_DIR, entry.name));
     }
   }

@@ -40,6 +40,35 @@ export BL_API_KEY=your-api-key
 
 When running on Blaxel itself, authentication is automatic.
 
+## Deleting resources
+
+Deletes are permanent, and workspaces are often shared: code that deletes can remove other people's sandboxes or data. Before writing or running code that deletes, stops, kills, restores over or unshares anything, look up the call in [references/destructive-operations.md](references/destructive-operations.md) and follow its tier:
+
+1. **Data and account resources** (volumes, volume templates, drives and drive files, images, snapshots, secrets, integration connections, policies, service accounts and API keys, workspaces): delete only after a person confirms each exact name. `fs.rm` under a volume or drive mount counts.
+2. **Compute** (sandboxes, agents, functions and MCP servers, jobs, models, applications, previews, processes): delete only what this session created, one resource per call, by exact name. A matching prefix, label or creator does not make a resource yours.
+3. **Never** call `delete()` in a loop over `list()` results, whether filtered by name prefix, label, status, creation time, creator or a before/after diff of two listings, and never sweep a workspace.
+
+The same rules hold when you delete from the command line: one `bl delete` per resource, with its exact name. `bl delete` never asks for confirmation and has no `--yes` or `-y` flag, so get the confirmation a tier needs from the user before you run it.
+
+Test against a scratch workspace with an API key scoped to it, and treat any workspace you did not create as read-only unless the user says otherwise. In tests and scripts, record each name as you create it, delete exactly those names, and give sandboxes a `ttl` so a cleanup that never runs leaves nothing behind:
+
+```typescript
+const created: string[] = [];
+const sandbox = await SandboxInstance.create({ name: `test-${runId}`, ttl: "1h" });
+created.push(sandbox.metadata.name!);
+// ... test ...
+for (const name of created) await SandboxInstance.delete(name);
+```
+
+```python
+created = []
+sandbox = await SandboxInstance.create({"name": f"test-{run_id}", "ttl": "1h"})
+created.append(sandbox.metadata.name)
+# ... test ...
+for name in created:
+    await SandboxInstance.delete(name)
+```
+
 ## Sandbox workflow (primary use case)
 
 This is the most common workflow: create a sandbox, run commands in it, and get a preview URL.
@@ -274,7 +303,7 @@ Overview: https://docs.blaxel.ai/Tutorials/Agents-Overview
 
 ## Core CLI commands
 
-For CLI commands that may prompt for input (like confirmations), add `-y` to auto-confirm when running in non-interactive / no-TTY environments (e.g. scripts, CI, agents).
+`bl new`, `bl deploy` and `bl push` prompt for input; add `-y` to skip the prompts in non-interactive / no-TTY environments (e.g. scripts, CI, agents). `bl delete` has no such flag and never prompts (see "Deleting resources").
 
 | Command | Purpose |
 |---------|---------|
