@@ -99,7 +99,7 @@ bl run         # Execute a Blaxel resource with custom input data.
 bl serve       # Start a local development server for your Blaxel project.
 bl setup       # Set up everything Blaxel needs on this machine, then log in.
 bl share       # Share Blaxel resources with other workspaces in your account.
-bl skills      # Manage Blaxel skills for coding agents
+bl skills      # Manage the Blaxel agent skills installed for your coding agents.
 bl token       # Retrieve the authentication token for the specified workspace.
 bl unshare     # Remove shared Blaxel resources from other workspaces.
 bl upgrade     # Upgrade the Blaxel CLI to the latest version.
@@ -138,7 +138,8 @@ bl workspaces  # List and manage Blaxel workspaces.
   then log in.
 - [share](references/share.md) - Share Blaxel resources with other workspaces in
   your account.
-- [skills](references/skills.md) - Manage Blaxel skills for coding agents
+- [skills](references/skills.md) - Manage the Blaxel agent skills installed for
+  your coding agents.
 - [token](references/token.md) - Retrieve the authentication token for the
   specified workspace.
 - [unshare](references/unshare.md) - Remove shared Blaxel resources from other
