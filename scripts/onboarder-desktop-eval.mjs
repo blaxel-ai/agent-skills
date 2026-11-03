@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import {
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readFileSync,
   writeFileSync,
 } from 'node:fs';
@@ -335,10 +336,9 @@ ${rows.join('\n')}
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const outputDir = resolve(
-    options.outputDir ||
-      join(tmpdir(), `blaxel-onboarder-desktop-eval-${new Date().toISOString().replace(/[:.]/g, '-')}`),
-  );
+  const outputDir = options.outputDir
+    ? resolve(options.outputDir)
+    : mkdtempSync(join(tmpdir(), 'blaxel-onboarder-desktop-eval-'));
   mkdirSync(outputDir, { recursive: true });
 
   const selectedTargetKeys = selectTargets(options.target);
