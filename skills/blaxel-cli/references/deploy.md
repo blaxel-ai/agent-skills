@@ -9,16 +9,30 @@ Deploy your Blaxel project to the cloud.
 
 This command packages your code, builds a container image, and deploys it
 to your workspace. The deployment process includes:
-1. Reading configuration from blaxel.toml
+1. Reading configuration from blaxel.toml (or the --config file)
 2. Packaging source code (respects .blaxelignore)
 3. Building container image with your runtime and dependencies
 4. Uploading to Blaxel's container registry
 5. Creating or updating the resource in your workspace
 6. Streaming build and deployment logs (interactive mode)
 
-A blaxel.toml configuration file is required. By default, the command looks
-for it in the current directory. Use -d to specify a subdirectory containing
-the blaxel.toml (useful for monorepo setups).
+The command reads its configuration from blaxel.toml, or from the file passed
+with --config. By default, it looks for that file in the current directory. Use
+-d to specify a subdirectory containing it (useful for monorepo setups).
+
+Use --dockerfile to select a Dockerfile, or set build.dockerfile in blaxel.toml
+(the flag wins). Paths are relative to the project directory (-d, or the current
+directory) and must stay inside it. The build context is unchanged, so COPY paths
+are unaffected. A custom Dockerfile needs a source build and one project per
+deploy (use --recursive=false when the config lists child packages). It and its
+adjacent .dockerignore are uploaded even if .blaxelignore excludes them.
+
+Use --config to read a config file other than blaxel.toml, such as
+blaxel-v2.toml. The path is relative to the project directory (-d, or the
+current directory), and the file must exist and parse. It is uploaded as
+blaxel.toml, so the build reads it too. It deploys that one project, so
+--config implies --recursive=false. Config files in the same directory share
+one build context; give each its own Dockerfile with build.dockerfile.
 
 If the blaxel.toml contains an 'image' field pointing to a registry image,
 the platform will pull the image and transform it via metamorph before deploying.
@@ -61,6 +75,15 @@ Examples:
   # Non-interactive deployment that waits for build and rollout and explains failures
   bl deploy --yes --wait --timeout 20m
 
+  # Deploy using a custom Dockerfile
+  bl deploy --dockerfile blaxel.Dockerfile
+
+  # Select a Dockerfile relative to a project subdirectory
+  bl deploy -d sandbox --dockerfile Dockerfile.v2
+
+  # Deploy a variant from its own config file (which can set build.dockerfile)
+  bl deploy --config blaxel-v2.toml
+
   # Deploy with environment variables
   bl deploy -e .env.production
 
@@ -87,8 +110,10 @@ Examples:
 
 Flags:
       --build-env-file string       Path to a build env file with Docker build args (default: auto-detect .env.build)
+      --config string               Config file relative to the project directory (default blaxel.toml)
   -d, --directory string            Deployment app path, can be a sub directory
       --docker-config string        Path to a Docker config.json file with registry credentials
+      --dockerfile string           Dockerfile path relative to the project directory (overrides build.dockerfile in blaxel.toml)
       --dryrun                      Dry run the deployment
   -e, --env-file strings            Environment file to load (default [.env])
       --experimental                Enable experimental features (e.g. USER directive support)
