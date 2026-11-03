@@ -215,9 +215,9 @@ await sandbox.delete()
 Full recipe: https://docs.blaxel.ai/Sandboxes/Lifecycle-recipe
 
 - Active vs standby: requests to the sandbox, open WebSocket/TCP connections (15 min idle timeout) and `keepAlive` processes keep it active. `get`/`list` do not wake it. A process started without `keepAlive` is frozen during standby and continues on resume.
-- Expiry: `ttl` / `ttl-max-age` count from creation and delete even an active sandbox. `expires` / `date` delete at a date. `ttl-idle` counts only time spent in standby, resets on resume, and never deletes an active sandbox. A sandbox that is never used also goes on standby after creation, so its `ttl-idle` clock starts then (a `60s` policy deletes it about 90s after creation). Combine policies; the first one met wins. An expired sandbox is deleted within a few seconds of its deadline.
+- Expiry: the sandbox's `ttl` field and a `ttl-max-age` policy count from creation and delete even an active sandbox. The `expires` field and a `date` policy delete at a date. `ttl-idle` counts only time spent in standby, resets on resume, and never deletes an active sandbox. A sandbox that is never used also goes on standby after creation, so its `ttl-idle` clock starts then (a `60s` policy deletes it about 90s after creation). `expirationPolicies` types are `ttl-idle`, `ttl-max-age` and `date` (`ttl` and `expires` are fields, not policy types), each at most once: a second one of a type fails with 400 (`expiration policy type 'ttl-max-age' can only appear once in the list`). Combine different types; the first one met wins. An expired sandbox is deleted within a few seconds of its deadline.
 - Current minimums: `5m` for `ttl` and `ttl-max-age`, `60s` for `ttl-idle`. Shorter values fail with 400 (`ttl 1m is too short: the minimum is 5m`). Units are `s`, `m`, `h`, `d`, `w`; `d` and `w` take a whole number on their own (`36h`, not `1d12h`). To remove a sandbox sooner, delete it explicitly.
-- Change expiry on a live sandbox with `updateTtl` / `updateLifecycle` (no restart). In Python, pass a `SandboxLifecycle` from `blaxel.core.client.models` (`SandboxLifecycle.from_dict({...})`) to `update_lifecycle`, and a plain dict under `"lifecycle"` at creation.
+- Change expiry on a live sandbox with `updateTtl` / `updateLifecycle` (no restart). `updateLifecycle` replaces the whole lifecycle, so pass every policy to keep, not only the new one. In Python, pass a `SandboxLifecycle` from `blaxel.core.client.models` (`SandboxLifecycle.from_dict({...})`) to `update_lifecycle`, and a plain dict under `"lifecycle"` at creation.
 - Long commands: start them with `keepAlive: true` (`timeout: 0` disables the 600s auto-kill), then block with `process.wait(name, { maxWait: -1 })` if needed. `ttl`, `ttl-max-age`, `expires` and `date` still apply while it runs.
 - Image updates: a sandbox keeps the image revision it was created with. `:latest` resolves at creation. To roll out a new template revision, delete and recreate (keep data on a volume).
 - Pools: there is no SDK pool API. `ttl` counts from creation, including time spent in the pool, so set a `date` policy with `updateLifecycle` when you hand a pooled sandbox out.
@@ -228,8 +228,12 @@ const sandbox = await SandboxInstance.createIfNotExists({
   image: "blaxel/base-image:latest",
   lifecycle: { expirationPolicies: [{ type: "ttl-idle", value: "24h", action: "delete" }] },
 });
+// Replaces the lifecycle: keep the ttl-idle policy and add a 7-day cap.
 await SandboxInstance.updateLifecycle("user-42-workspace", {
-  expirationPolicies: [{ type: "ttl-max-age", value: "7d", action: "delete" }],
+  expirationPolicies: [
+    { type: "ttl-idle", value: "24h", action: "delete" },
+    { type: "ttl-max-age", value: "7d", action: "delete" },
+  ],
 });
 ```
 
@@ -242,9 +246,13 @@ sandbox = await SandboxInstance.create_if_not_exists({
     "image": "blaxel/base-image:latest",
     "lifecycle": {"expiration_policies": [{"type": "ttl-idle", "value": "24h", "action": "delete"}]},
 })
+# Replaces the lifecycle: keep the ttl-idle policy and add a 7-day cap.
 await SandboxInstance.update_lifecycle(
     "user-42-workspace",
-    SandboxLifecycle.from_dict({"expiration_policies": [{"type": "ttl-max-age", "value": "7d", "action": "delete"}]}),
+    SandboxLifecycle.from_dict({"expiration_policies": [
+        {"type": "ttl-idle", "value": "24h", "action": "delete"},
+        {"type": "ttl-max-age", "value": "7d", "action": "delete"},
+    ]}),
 )
 ```
 
