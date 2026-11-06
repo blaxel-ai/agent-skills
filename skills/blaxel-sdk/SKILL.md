@@ -111,7 +111,7 @@ sandbox = await SandboxInstance.create_if_not_exists({
 
 Use `createIfNotExists` / `create_if_not_exists` to reuse an existing sandbox by name or create a new one.
 
-Always prefer this over a get-then-create fallback. Deleted sandboxes are kept in `TERMINATED` state for a few minutes (so their logs stay accessible), which means a plain `get` can return a dead sandbox whose gateway and preview URLs fail with workload-not-found. `createIfNotExists` checks the status for you and recreates the sandbox when the existing record is `FAILED`, `TERMINATED`, `TERMINATING`, or `DELETING`. As of `@blaxel/core` 0.2.88 / `blaxel` 0.2.55, it also waits out the brief `DELETING` window right after a delete, so delete-then-recreate works directly. On older SDK versions that window can throw "Unable to create sandbox after 3 attempts" — wait a moment and retry, or upgrade. If you must use `get`, check `sandbox.status` before reusing the instance.
+Always prefer this over a get-then-create fallback. Deleted and expired sandboxes keep `TERMINATED` status for at least 5 minutes, often longer (so their logs stay accessible), which means a plain `get` can return a dead sandbox whose gateway and preview URLs fail with workload-not-found. `createIfNotExists` returns an alive sandbox unchanged (the image, env and expiration policies in the call are not applied to it), replaces a `FAILED` or `TERMINATED` one, and waits server-side for an in-flight deletion or creation of the same name (`@blaxel/core` 0.3.25+ / `blaxel` 0.4.13+). If the old sandbox is still being torn down after that wait, it throws a 409 with code `SANDBOX_DELETION_IN_PROGRESS`. If the old sandbox had a termination grace period and its processes ignore `SIGTERM`, the new one waits for that period and then fails with a 500 `DEPLOYMENT_FAILED`. Retry on either code after a few seconds (a retry replaces the failed sandbox), or use a new name. If you must use `get`, check `sandbox.status` before reusing the instance.
 
 ### Step 2: Write files and run commands
 
@@ -239,6 +239,52 @@ await sandbox.process.kill("dev-server")
 await sandbox.delete()
 ```
 
+### Sandbox lifecycle and expiry
+
+Full recipe: https://docs.blaxel.ai/Sandboxes/Lifecycle-recipe
+
+- Active vs standby: requests to the sandbox, open WebSocket/TCP connections that carry traffic, and `keepAlive` processes keep it active. An idle connection does not: a preview-URL WebSocket with no traffic for 60 seconds is closed, so send messages or pings more often than that. `get`/`list` do not wake it. A process started without `keepAlive` is frozen during standby and continues on resume.
+- Expiry: the sandbox's `ttl` field and a `ttl-max-age` policy count from creation and delete even an active sandbox. The `expires` field and a `date` policy delete at a date. `ttl-idle` counts only time spent in standby, resets on resume, and never deletes an active sandbox. A sandbox that is never used also goes on standby after creation, so its `ttl-idle` clock starts then (a `60s` policy deletes it about 90s after creation). `expirationPolicies` types are `ttl-idle`, `ttl-max-age` and `date` (`ttl` and `expires` are fields, not policy types), each at most once: a second one of a type fails with 400 (`expiration policy type 'ttl-max-age' can only appear once in the list`). Combine different types; the first one met wins. An expired sandbox is deleted within a few seconds of its deadline.
+- Current minimums: `5m` for `ttl` and `ttl-max-age`, `60s` for `ttl-idle`. Shorter values fail with 400 (`ttl 1m is too short: the minimum is 5m`). Units are `s`, `m`, `h`, `d`, `w`; `d` and `w` take a whole number on their own (`36h`, not `1d12h`). To remove a sandbox sooner, delete it explicitly.
+- Change expiry on a live sandbox with `updateTtl` / `updateLifecycle` (no restart). `updateLifecycle` replaces the whole lifecycle, so pass every policy to keep, not only the new one. In Python, pass a `SandboxLifecycle` from `blaxel.core.client.models` (`SandboxLifecycle.from_dict({...})`) to `update_lifecycle`, and a plain dict under `"lifecycle"` at creation.
+- Long commands: start them with `keepAlive: true` (`timeout: 0` disables the 600s auto-kill), then block with `process.wait(name, { maxWait: -1 })` if needed. `ttl`, `ttl-max-age`, `expires` and `date` still apply while it runs.
+- Image updates: a sandbox keeps the image revision it was created with. `:latest` resolves at creation. To roll out a new template revision, delete and recreate (keep data on a volume).
+- Pools: there is no SDK pool API. `ttl` counts from creation, including time spent in the pool, so set a `date` policy with `updateLifecycle` when you hand a pooled sandbox out.
+
+```typescript
+const sandbox = await SandboxInstance.createIfNotExists({
+  name: "user-42-workspace",
+  image: "blaxel/base-image:latest",
+  lifecycle: { expirationPolicies: [{ type: "ttl-idle", value: "24h", action: "delete" }] },
+});
+// Replaces the lifecycle: keep the ttl-idle policy and add a 7-day cap.
+await SandboxInstance.updateLifecycle("user-42-workspace", {
+  expirationPolicies: [
+    { type: "ttl-idle", value: "24h", action: "delete" },
+    { type: "ttl-max-age", value: "7d", action: "delete" },
+  ],
+});
+```
+
+```python
+from blaxel.core import SandboxInstance
+from blaxel.core.client.models import SandboxLifecycle
+
+sandbox = await SandboxInstance.create_if_not_exists({
+    "name": "user-42-workspace",
+    "image": "blaxel/base-image:latest",
+    "lifecycle": {"expiration_policies": [{"type": "ttl-idle", "value": "24h", "action": "delete"}]},
+})
+# Replaces the lifecycle: keep the ttl-idle policy and add a 7-day cap.
+await SandboxInstance.update_lifecycle(
+    "user-42-workspace",
+    SandboxLifecycle.from_dict({"expiration_policies": [
+        {"type": "ttl-idle", "value": "24h", "action": "delete"},
+        {"type": "ttl-max-age", "value": "7d", "action": "delete"},
+    ]}),
+)
+```
+
 ## Sandbox templates (custom images)
 
 When you need a reusable environment (e.g. an Astro project with all deps pre-installed), create a template:
@@ -347,7 +393,7 @@ protocol = "tcp"
 - Ports 80, 443, 8080 are reserved by Blaxel
 - Dev servers must bind to `0.0.0.0`, not `localhost`, for preview URLs to work
 - ~50% of sandbox memory is reserved for the in-memory filesystem (tmpfs). Use volumes for extra storage
-- Sandboxes auto-scale to zero after ~5s of inactivity. State is preserved in standby and resumes in <25ms
+- Sandboxes go on standby about 15s after the last connection ends. State is preserved in standby and resumes in <25ms. See "Sandbox lifecycle and expiry" above for what keeps a sandbox active
 - Deleted sandboxes stay visible in `TERMINATED` state for a few minutes (for log access). A plain `get` can return one; use `createIfNotExists` or check `sandbox.status` before reuse
 - Process `timeout` is in seconds (default 600). It bounds `waitForCompletion`: when exceeded, the call throws a timeout error (HTTP 422) but the process keeps running — re-attach with `process.get` / `process.wait` instead of assuming it failed. With `keepAlive` it auto-kills the process after the timeout (0 = no auto-kill). Ordinary long-running processes (e.g. dev servers started with `waitForPorts`) are not auto-killed by it
 - `waitForCompletion` holds the HTTP request open while the process runs (and is capped at ~58s over the sandbox MCP server). For long processes, start without it and block with `process.wait(name, { maxWait })` instead
@@ -403,7 +449,7 @@ Do not re-clone a repo and re-run `npm install` on every cold boot. The sandbox 
 - Agent Drive: shared filesystem mountable into running sandboxes (private preview). Good for state shared across several sandboxes.
 - Template images: bake heavy dependencies into a custom sandbox image so cold boots start pre-installed.
 
-Also remember: idle sandboxes go to standby (free, resumes in <25ms) — prefer letting a sandbox idle with a TTL over deleting and rebuilding it on every session.
+Also remember: idle sandboxes go to standby (no memory charge, only snapshot storage; resumes in <25ms). Prefer letting a sandbox idle with a `ttl-idle` policy over deleting and rebuilding it on every session.
 
 ### Disable process log export
 
@@ -423,7 +469,7 @@ You lose the process logs in the Blaxel Console; reading logs through the SDK/AP
 | Re-pulling repo + reinstalling deps on every cold boot | minutes of startup on every session | volume or Agent Drive for the workspace; template image for deps |
 | One `fs.write` per file for many files | restore takes minutes (N network round trips) | zip + `writeBinary` + unzip (2 calls); `writeTree` for small sets |
 | Verbose stdout with log export left on | CPU spikes during compiles/heavy output | `SANDBOX_DISABLE_PROCESS_LOGGING=true` or workspace toggle; also lower app verbosity |
-| Deleting sandboxes on idle | cold rebuild on every return visit | let standby handle idleness; use `ttl` for cleanup |
+| Deleting sandboxes on idle | cold rebuild on every return visit | let standby handle idleness; use a `ttl-idle` policy for cleanup |
 
 ## Agent Drive (shared filesystem)
 

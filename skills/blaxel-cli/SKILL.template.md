@@ -146,7 +146,7 @@ spec:
   lifecycle:
     expirationPolicies:
       - type: ttl-idle
-        value: 1h       # Delete after 1 hour of inactivity. Units: h, d, w
+        value: 1h       # Delete after 1 hour in standby. Units: s, m, h, d, w
         action: delete
 EOF
 
